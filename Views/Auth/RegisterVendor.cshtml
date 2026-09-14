@@ -1,0 +1,113 @@
+﻿@model Kayane.ViewModels.RegisterVendorVM
+
+@{
+    ViewData["Title"] = "Register as a Vendor";
+}
+
+<div class="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-xl w-full space-y-8 bg-white border border-gray-200 p-8 sm:p-10 rounded-3xl shadow-sm">
+        <!-- Header -->
+        <div class="text-center space-y-2">
+            <h1 class="text-3xl font-extrabold text-gray-900">Become a Seller</h1>
+            <p class="text-sm text-gray-500">
+                Register your business account on Kayane and reach thousands of daily active buyers.
+            </p>
+        </div>
+
+        <form asp-action="RegisterVendor" method="post" class="space-y-6">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-xs font-semibold text-red-600 bg-red-50 p-3 rounded-xl border border-red-100"></div>
+
+            <!-- Personal Contact Info -->
+            <div class="space-y-4">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-600 border-b border-gray-100 pb-2">
+                    1. Account Owner Information
+                </h2>
+
+                <div>
+                    <label asp-for="FullName" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Full Name</label>
+                    <input asp-for="FullName" placeholder="Jane Doe"
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                    <span asp-validation-for="FullName" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label asp-for="Email" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Email Address</label>
+                        <input asp-for="Email" type="email" placeholder="vendor@business.com"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        <span asp-validation-for="Email" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+
+                    <div>
+                        <label asp-for="Phone" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Phone Number</label>
+                        <input asp-for="Phone" placeholder="+234..."
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        <span asp-validation-for="Phone" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business Details -->
+            <div class="space-y-4">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-600 border-b border-gray-100 pb-2">
+                    2. Business & Store Info
+                </h2>
+
+                <div>
+                    <label asp-for="BusinessName" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Business / Store Name</label>
+                    <input asp-for="BusinessName" placeholder="Kayane Tech Hub"
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                    <span asp-validation-for="BusinessName" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="BusinessDescription" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Business Description</label>
+                    <textarea asp-for="BusinessDescription" rows="2" placeholder="Briefly describe what your store sells..."
+                              class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                    <span asp-validation-for="BusinessDescription" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="BusinessAddress" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Business Address</label>
+                    <input asp-for="BusinessAddress" placeholder="Suite 12, Commercial Plaza, Lagos"
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                    <span asp-validation-for="BusinessAddress" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+            </div>
+
+            <!-- Credentials -->
+            <div class="space-y-4">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-600 border-b border-gray-100 pb-2">
+                    3. Security Credentials
+                </h2>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label asp-for="Password" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Password</label>
+                        <input asp-for="Password" type="password" placeholder="••••••••"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        <span asp-validation-for="Password" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+
+                    <div>
+                        <label asp-for="ConfirmPassword" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Confirm Password</label>
+                        <input asp-for="ConfirmPassword" type="password" placeholder="••••••••"
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        <span asp-validation-for="ConfirmPassword" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl transition shadow-sm">
+                Complete Vendor Registration
+            </button>
+
+            <div class="text-center text-xs text-gray-500 pt-2">
+                Already registered? 
+                <a asp-action="Login" class="text-indigo-600 font-semibold hover:underline">Log in to your account</a>
+            </div>
+        </form>
+    </div>
+</div>

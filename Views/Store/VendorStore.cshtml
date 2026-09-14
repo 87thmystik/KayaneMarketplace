@@ -1,0 +1,109 @@
+﻿@model Kayane.ViewModels.VendorStorefrontVM
+@{
+    ViewData["Title"] = Model.BusinessName + " Store";
+}
+
+<!-- Vendor Store Header / Banner -->
+<div class="position-relative bg-dark text-white rounded-3 overflow-hidden mb-4 shadow-sm">
+    @{
+        var banner = string.IsNullOrWhiteSpace(Model.BannerUrl)
+            ? "/images/default-vendor-banner.jpg"
+            : Model.BannerUrl;
+    }
+    <div style="height: 220px; background: url('@banner') center/cover no-repeat; filter: brightness(0.6);"></div>
+    <div class="position-absolute bottom-0 start-0 p-4 d-flex align-items-end gap-3 w-100 bg-gradient">
+        <img src="@Model.LogoUrl" alt="@Model.BusinessName" class="rounded-circle border border-3 border-white shadow" style="width: 90px; height: 90px; object-fit: cover;" />
+        <div class="flex-grow-1">
+            <h1 class="h2 mb-1 fw-bold text-white">@Model.BusinessName</h1>
+            <p class="mb-1 text-white-50 small">@Model.Description</p>
+            <div class="d-flex align-items-center gap-3 text-white-50 small">
+                <span><i class="fa fa-star text-warning me-1"></i><strong>@Model.AverageRating</strong> (@Model.TotalReviews reviews)</span>
+                <span><i class="fa fa-box me-1"></i><strong>@Model.TotalProductsCount</strong> Products</span>
+                <span><i class="fa fa-calendar me-1"></i>Member since @Model.MemberSince.ToString("MMM yyyy")</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Category Filter Sidebar -->
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light fw-bold">Categories</div>
+            <div class="list-group list-group-flush">
+                <a asp-action="VendorStore" asp-route-slug="@Model.Slug"
+                   class="list-group-item list-group-item-action @(string.IsNullOrEmpty(Model.SelectedCategory) ? "active fw-bold" : "")">
+                    All Products
+                </a>
+                @foreach (var cat in Model.AvailableCategories)
+                {
+                    <a asp-action="VendorStore" asp-route-slug="@Model.Slug" asp-route-category="@cat"
+                       class="list-group-item list-group-item-action @(Model.SelectedCategory == cat ? "active fw-bold" : "")">
+                        @cat
+                    </a>
+                }
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.SupportEmail) || !string.IsNullOrEmpty(Model.SupportPhone))
+        {
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-light fw-bold">Store Contact</div>
+                <div class="card-body small">
+                    @if (!string.IsNullOrEmpty(Model.SupportEmail))
+                    {
+                        <div class="mb-2"><i class="fa fa-envelope me-2 text-muted"></i>@Model.SupportEmail</div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.SupportPhone))
+                    {
+                        <div><i class="fa fa-phone me-2 text-muted"></i>@Model.SupportPhone</div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Product Grid -->
+    <div class="col-md-9">
+        @if (!Model.Products.Any())
+        {
+            <div class="alert alert-light text-center border py-5">
+                <i class="fa fa-box-open fa-3x text-muted mb-3"></i>
+                <p class="mb-0">No approved products available in this store section.</p>
+            </div>
+        }
+        else
+        {
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                @foreach (var product in Model.Products)
+                {
+                    <div class="col">
+                        <div class="card h-100 shadow-sm border-0">
+                            <img src="@(product.ImageUrl ?? "/images/product-placeholder.png")" class="card-img-top p-3" alt="@product.Name" style="height: 180px; object-fit: contain;" />
+                            <div class="card-body d-flex flex-column">
+                                <span class="badge bg-light text-dark align-self-start mb-2 border">@product.CategoryName</span>
+                                <h6 class="card-title text-truncate fw-bold mb-1">@product.Name</h6>
+                                <div class="text-success fw-bold fs-5 mb-2">@product.Price.ToString("C")</div>
+                                <div class="mt-auto d-flex gap-2">
+                                    <a asp-controller="Products" asp-action="Details" asp-route-id="@product.ProductId" class="btn btn-sm btn-outline-secondary w-100">
+                                        View Details
+                                    </a>
+                                    <form asp-controller="Cart" asp-action="AddToCart" method="post" class="w-100">
+                                        @Html.AntiForgeryToken()
+                                        <a asp-controller="Storefront" asp-action="Details" asp-route-id="@product.ProductId" class="btn btn-sm btn-outline-secondary w-100">
+                                            View Details
+                                        </a>
+                                        <input type="hidden" name="quantity" value="1" />
+                                        <button type="submit" class="btn btn-sm btn-primary w-100">
+                                            <i class="fa fa-cart-plus me-1"></i> Add
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

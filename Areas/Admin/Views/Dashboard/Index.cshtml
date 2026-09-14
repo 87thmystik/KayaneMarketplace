@@ -1,0 +1,202 @@
+﻿@model Kayane.ViewModels.AdminDashboardVM
+@using Kayane.Models
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = "Admin Control Panel";
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Top Action Bar (Logout & Navigation) -->
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <form asp-controller="Auth" asp-action="Logout" asp-area="" method="post" class="inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-sm font-semibold rounded-xl transition shadow-sm">
+                Logout
+            </button>
+        </form>
+    </div>
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900">Platform Overview</h1>
+            <p class="text-sm text-gray-500 mt-1">Global management, vendor approvals, product moderation, and metrics.</p>
+        </div>
+        <div class="flex items-center gap-3">
+           <a asp-controller="AdminPayouts" asp-action="Index" . class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Payout Requests
+            </a>
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" class="px-4 py-2 bg-amber-600 border border-gray-300 rounded-xl text-sm font-semibold text-white hover:bg-amber-700 transition shadow-sm">
+                Manage Vendors (@Model.PendingVendorsCount)
+            </a>
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Products" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+                Moderate Products (@Model.PendingProductsCount)
+            </a>
+        </div>
+    </div>
+
+    <!-- Platform Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Gross Platform Revenue</p>
+            <p class="text-3xl font-extrabold text-gray-900 mt-2">&#8358 @Model.TotalPlatformRevenue.ToString("N2")</p>
+            <p class="text-xs text-gray-400 mt-1">Across @Model.TotalOrdersCount total orders</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Registered Vendors</p>
+            <p class="text-3xl font-extrabold text-gray-900 mt-2">@Model.TotalVendors</p>
+            <p class="text-xs text-amber-600 font-semibold mt-1">@Model.PendingVendorsCount pending approval</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Catalog</p>
+            <p class="text-3xl font-extrabold text-gray-900 mt-2">@Model.TotalProducts</p>
+            <p class="text-xs text-amber-600 font-semibold mt-1">@Model.PendingProductsCount pending moderation</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total User Accounts</p>
+            <p class="text-3xl font-extrabold text-gray-900 mt-2">@Model.TotalUsers</p>
+            <p class="text-xs text-emerald-600 font-semibold mt-1">Active platform buyers & sellers</p>
+        </div>
+    </div>
+
+    <!-- Pending Vendor Approvals Section -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">Pending Vendor Registrations</h2>
+                <p class="text-xs text-gray-500">New sellers awaiting administrative review.</p>
+            </div>
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" asp-route-statusFilter="@VendorStatus.Pending" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+                View All Pending →
+            </a>
+        </div>
+
+        @if (Model.PendingVendors?.Any() == true)
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-xs uppercase font-semibold text-gray-500 border-b border-gray-200">
+                            <th class="px-6 py-3.5">Business Name</th>
+                            <th class="px-6 py-3.5">Owner Details</th>
+                            <th class="px-6 py-3.5">Address</th>
+                            <th class="px-6 py-3.5">Applied Date</th>
+                            <th class="px-6 py-3.5 text-right">Quick Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-gray-100 text-sm">
+                        @foreach (var vendor in Model.PendingVendors)
+                        {
+                            <tr class="hover:bg-gray-50/80 transition">
+                                <td class="px-6 py-4 font-bold text-gray-900">@vendor.BusinessName</td>
+                                <td class="px-6 py-4">
+                                    <p class="font-semibold text-gray-900 text-xs">@vendor.BusinessName</p>
+                                    <p class="text-xs text-gray-500">@vendor.BusinessEmail | @vendor.BusinessPhone</p>
+                                </td>
+                                <td class="px-6 py-4 text-xs text-gray-600 truncate max-w-xs">@vendor.BusinessAddress</td>
+                                <td class="px-6 py-4 text-xs text-gray-500">@vendor.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <form asp-area="Admin" asp-controller="Dashboard" asp-action="UpdateVendorStatus" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="vendorId" value="@vendor.VendorId" />
+                                            <input type="hidden" name="status" value="@VendorStatus.Active" />
+                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                            <button type="submit" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition">
+                                                Approve
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-8 text-center text-gray-500 text-sm">
+                No pending vendor applications at this time.
+            </div>
+        }
+    </div>
+
+    <!-- Pending Product Moderation Section -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">Pending Product Moderation</h2>
+                <p class="text-xs text-gray-500">Recently uploaded items waiting for marketplace approval.</p>
+            </div>
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Products" asp-route-statusFilter="@ProductStatus.Pending" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+                View All Pending →
+            </a>
+        </div>
+
+        @if (Model.PendingProducts?.Any() == true)
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-xs uppercase font-semibold text-gray-500 border-b border-gray-200">
+                            <th class="px-6 py-3.5">Product</th>
+                            <th class="px-6 py-3.5">Vendor</th>
+                            <th class="px-6 py-3.5">Category</th>
+                            <th class="px-6 py-3.5">Price</th>
+                            <th class="px-6 py-3.5 text-right">Quick Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-sm">
+                        @foreach (var prod in Model.PendingProducts)
+                        {
+                            <tr class="hover:bg-gray-50/80 transition">
+                                <td class="px-6 py-4 font-bold text-gray-900">@prod.Name</td>
+                                <td class="px-6 py-4 text-xs font-medium text-gray-700">@prod.VendorBusinessName</td>
+                                <td class="px-6 py-4 text-xs text-gray-500">@prod.CategoryName</td>
+                                <td class="px-6 py-4 font-bold text-gray-900">$@prod.Price.ToString("F2")</td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <form asp-area="Admin" asp-controller="Dashboard" asp-action="UpdateProductStatus" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="productId" value="@prod.ProductId" />
+                                            <input type="hidden" name="status" value="@ProductStatus.Approved" />
+                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                            <button type="submit" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition">
+                                                Approve
+                                            </button>
+                                        </form>
+                                        <form asp-area="Admin" asp-controller="Dashboard" asp-action="UpdateProductStatus" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="productId" value="@prod.ProductId" />
+                                            <input type="hidden" name="status" value="@ProductStatus.Rejected" />
+                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                            <button type="submit" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition">
+                                                Reject
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-8 text-center text-gray-500 text-sm">
+                No pending products to moderate.
+            </div>
+        }
+    </div>
+</div>

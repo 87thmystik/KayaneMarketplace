@@ -1,0 +1,61 @@
+﻿@model Kayane.Models.Vendor
+@using Kayane.Models
+
+@{
+    ViewData["Title"] = "Application Status";
+}
+
+@if (Model == null)
+{
+    <div class="max-w-2xl mx-auto px-4 py-16 text-center">
+        <div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm space-y-4">
+            <h1 class="text-2xl font-extrabold text-gray-900">No Vendor Profile Found</h1>
+            <p class="text-sm text-gray-600">We couldn't find an active vendor application associated with your account.</p>
+            <a asp-action="Register" class="inline-block px-6 py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-xl">Register Storefront</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="max-w-2xl mx-auto px-4 py-16 text-center">
+        <div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm space-y-6">
+            @if (Model.Status == VendorStatus.Pending)
+            {
+                <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+                    ⌛
+                </div>
+                <h1 class="text-2xl font-extrabold text-gray-900">Application Under Review</h1>
+                <p class="text-sm text-gray-600">
+                    Your vendor application for <strong class="text-gray-800">@Model.BusinessName</strong> was submitted on
+                    <strong>@Model.CreatedAt.ToString("MMM dd, yyyy")</strong> and is currently pending administrator approval.
+                </p>
+                <div class="inline-block px-4 py-2 bg-amber-50 text-amber-800 text-xs font-bold rounded-xl border border-amber-200">
+                    Status: Pending Approval
+                </div>
+            }
+            else if (Model.Status == VendorStatus.Approved || Model.Status == VendorStatus.Active)
+            {
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+                    ✓
+                </div>
+                <h1 class="text-2xl font-extrabold text-gray-900">Storefront Approved!</h1>
+                <p class="text-sm text-gray-600">
+                    Congratulations, <strong class="text-gray-800">@Model.BusinessName</strong> is active. You can now manage your inventory and products.
+                </p>
+                <a asp-action="Dashboard" asp-controller="Vendor" class="inline-block px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition">
+                    Go to Vendor Dashboard
+                </a>
+            }
+            else
+            {
+                <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+                    ✕
+                </div>
+                <h1 class="text-2xl font-extrabold text-gray-900">Storefront @Model.Status</h1>
+                <p class="text-sm text-gray-600">
+                    Your storefront for <strong>@Model.BusinessName</strong> is currently <strong>@Model.Status.ToString().ToLower()</strong>. Please contact support for resolution.
+                </p>
+            }
+        </div>
+    </div>
+}

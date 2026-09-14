@@ -1,0 +1,104 @@
+﻿@model Kayane.Models.Order
+
+@{
+    ViewData["Title"] = "Order Confirmation";
+}
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <!-- Success Header -->
+    <div class="bg-white border border-gray-200 rounded-3xl p-8 sm:p-10 text-center shadow-sm space-y-4">
+        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center font-bold text-3xl mx-auto">
+            ✓
+        </div>
+        <div class="space-y-1">
+            <h1 class="text-3xl font-extrabold text-gray-900">Thank You for Your Order!</h1>
+            <p class="text-sm text-gray-500">
+                We've received your order and are preparing it. A confirmation email has been sent to
+                <span class="font-semibold text-gray-800">@Model.CustomerEmail</span>.
+            </p>
+        </div>
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl border border-gray-200 text-xs font-mono text-gray-600">
+            <span>Order Reference:</span>
+            <span class="font-bold text-gray-900">@Model.OrderId</span>
+        </div>
+    </div>
+
+    <!-- Order Details Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+        <!-- Purchased Items Summary -->
+        <div class="md:col-span-2 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-6">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+                <h2 class="text-lg font-bold text-gray-900">Ordered Items</h2>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                    @Model.Status
+                </span>
+            </div>
+
+            <div class="divide-y divide-gray-100">
+                @foreach (var item in Model.OrderItems)
+                {
+                    <div class="py-4 flex items-center justify-between gap-4">
+                        <div>
+                            <p class="font-bold text-gray-900 text-sm">@(item.Product?.Name ?? "Product Item")</p>
+                            <p class="text-xs text-gray-500">
+                                Qty: @item.Quantity × $@item.UnitPrice.ToString("F2")
+                            </p>
+                        </div>
+                        <span class="font-semibold text-gray-900 text-sm">$@item.TotalPrice.ToString("F2")</span>
+                    </div>
+                }
+            </div>
+
+            <div class="border-t border-gray-100 pt-4 space-y-2 text-sm text-gray-600">
+                <div class="flex justify-between">
+                    <span>Payment Method</span>
+                    <span class="font-semibold text-gray-900">@Model.PaymentMethod</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Order Date</span>
+                    <span class="font-semibold text-gray-900">@Model.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                </div>
+                <div class="border-t border-gray-100 pt-3 flex justify-between text-base font-bold text-gray-900">
+                    <span>Total Amount</span>
+                    <span class="text-indigo-600">$@Model.TotalAmount.ToString("F2")</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer & Shipping Information -->
+        <div class="space-y-6">
+            <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-4">
+                <h2 class="text-base font-bold text-gray-900 border-b border-gray-100 pb-3">Shipping Details</h2>
+
+                <div class="text-xs space-y-3 text-gray-600">
+                    <div>
+                        <p class="font-semibold text-gray-500 uppercase tracking-wider">Customer Name</p>
+                        <p class="font-medium text-gray-900 text-sm mt-0.5">@Model.CustomerName</p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-gray-500 uppercase tracking-wider">Phone</p>
+                        <p class="font-medium text-gray-900 text-sm mt-0.5">@Model.CustomerPhone</p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-gray-500 uppercase tracking-wider">Delivery Address</p>
+                        <p class="font-medium text-gray-900 text-sm mt-0.5 leading-relaxed">@Model.ShippingAddress</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Action Buttons -->
+            <div class="space-y-3">
+                <a asp-controller="Shop" asp-action="Index" class="block w-full text-center py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl transition shadow-sm">
+                    Continue Shopping
+                </a>
+                <a asp-controller="Home" asp-action="Index" class="block w-full text-center py-3 px-4 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold text-sm rounded-xl transition shadow-sm">
+                    Back to Home
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>

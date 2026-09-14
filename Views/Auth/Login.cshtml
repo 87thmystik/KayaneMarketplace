@@ -1,0 +1,54 @@
+﻿@model Kayane.ViewModels.LoginVM
+@{
+    ViewData["Title"] = "Sign In";
+}
+
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+        <div>
+            <h2 class="text-center text-3xl font-extrabold text-gray-900">Sign in to Kayane</h2>
+            <p class="mt-2 text-center text-sm text-gray-500">Access your marketplace account</p>
+        </div>
+
+        <form class="mt-8 space-y-6" asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-red-600 text-xs font-semibold"></div>
+
+            <div class="rounded-md shadow-sm space-y-4">
+                <div>
+                    <label asp-for="Email" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Email Address</label>
+                    <input asp-for="Email" type="email" required class="appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="you@example.com" />
+                    <span asp-validation-for="Email" class="text-red-500 text-xs"></span>
+                </div>
+                <div>
+                    <label asp-for="Password" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Password</label>
+                    <input asp-for="Password" type="password" required class="appearance-none rounded-xl relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="••••••••" />
+                    <span asp-validation-for="Password" class="text-red-500 text-xs"></span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between text-sm">
+                <div class="flex items-center">
+                    <input asp-for="RememberMe" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                    <label asp-for="RememberMe" class="ml-2 block text-xs text-gray-700">Remember me</label>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition shadow-sm">
+                    Sign In
+                </button>
+            </div>
+        </form>
+        <div class="mt-6 text-center space-y-2">
+            <p class="text-xs text-gray-500">Not registered with us yet?</p>
+            <a asp-controller="Auth" asp-action="RegisterVendor" class="inline-block w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-xl transition text-center">
+                Sign Up as a Vendor
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

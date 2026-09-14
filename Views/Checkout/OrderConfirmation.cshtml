@@ -1,0 +1,40 @@
+﻿@model Kayane.Models.OrderConfirmationVM
+@{
+    ViewData["Title"] = "Order Confirmation";
+}
+
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center space-y-6">
+    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+        ✓
+    </div>
+
+    <div class="space-y-2">
+        <h1 class="text-3xl font-extrabold text-gray-900">Order Placed Successfully!</h1>
+        <p class="text-sm text-gray-500">Thank you for shopping with Kayane. Your order reference number is <span class="font-mono font-bold text-gray-800">#@Model.OrderId</span></p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 p-8 text-left shadow-sm space-y-4">
+        <div class="flex justify-between border-b pb-3 text-sm">
+            <span class="text-gray-500">Customer Name:</span>
+            <span class="font-bold text-gray-900">@Model.CustomerName</span>
+        </div>
+        <div class="flex justify-between border-b pb-3 text-sm">
+            <span class="text-gray-500">Shipping Address:</span>
+            <span class="font-bold text-gray-900">@Model.ShippingAddress</span>
+        </div>
+        <div class="flex justify-between border-b pb-3 text-sm">
+            <span class="text-gray-500">Payment Status:</span>
+            <span class="font-bold text-amber-600">@Model.Payment?.Status</span>
+        </div>
+        <div class="flex justify-between pt-2 text-base font-extrabold">
+            <span>Total Amount Paid:</span>
+            <span class="text-emerald-600">&#8358;@Model.TotalAmount.ToString("N2")</span>
+        </div>
+    </div>
+
+    <div class="pt-4 flex justify-center gap-4">
+        <a asp-controller="Shop" asp-action="Index" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition shadow-sm">
+            Continue Shopping
+        </a>
+    </div>
+</div>

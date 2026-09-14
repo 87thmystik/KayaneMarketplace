@@ -1,0 +1,178 @@
+﻿@model Kayane.ViewModels.AdminVendorListVM
+@using Kayane.Models
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900">Vendor Management</h1>
+            <p class="text-sm text-gray-500 mt-1">Filter, review, approve, or suspend vendor storefronts on Kayane.</p>
+        </div>
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+            ← Back to Admin Dashboard
+        </a>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <!-- Filter Tabs -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1">
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @(Model.SelectedStatus == null ? "bg-indigo-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100")">
+                All Statuses
+            </a>
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" asp-route-statusFilter="@VendorStatus.Pending" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @(Model.SelectedStatus == VendorStatus.Pending ? "bg-indigo-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100")">
+                Pending
+            </a>
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" asp-route-statusFilter="@VendorStatus.Active" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @(Model.SelectedStatus == VendorStatus.Active ? "bg-indigo-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100")">
+                Active
+            </a>
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" asp-route-statusFilter="@VendorStatus.Suspended" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @(Model.SelectedStatus == VendorStatus.Suspended ? "bg-indigo-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100")">
+                Suspended
+            </a>
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" asp-route-statusFilter="@VendorStatus.Rejected" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @(Model.SelectedStatus == VendorStatus.Rejected ? "bg-indigo-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100")">
+                Rejected
+            </a>
+        </div>
+
+        <!-- Search Input -->
+        <form method="get" asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" class="flex items-center gap-2">
+            @if (Model.SelectedStatus.HasValue)
+            {
+                <input type="hidden" name="statusFilter" value="@Model.SelectedStatus" />
+            }
+            <input type="text" name="searchKeyword" value="@Model.SearchKeyword" placeholder="Search business or owner..."
+                   class="px-3.5 py-2 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none w-64" />
+            <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition">
+                Search
+            </button>
+            @if (!string.IsNullOrWhiteSpace(Model.SearchKeyword))
+            {
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" asp-route-statusFilter="@Model.SelectedStatus" class="text-xs text-gray-500 hover:text-gray-700 underline">Clear</a>
+            }
+        </form>
+    </div>
+
+    <!-- Vendors Table -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        @if (Model.Vendors.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-xs uppercase font-semibold text-gray-500 border-b border-gray-200">
+                            <th class="px-6 py-3.5">Business Name</th>
+                            <th class="px-6 py-3.5">Owner Contact</th>
+                            <th class="px-6 py-3.5">Status</th>
+                            <th class="px-6 py-3.5">Registered Date</th>
+                            <th class="px-6 py-3.5 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-sm">
+                        @foreach (var vendor in Model.Vendors)
+                        {
+                            <tr class="hover:bg-gray-50/80 transition">
+                                <td class="px-6 py-4">
+                                    <p class="font-bold text-gray-900">@vendor.BusinessName</p>
+                                    <p class="text-xs text-gray-500">@vendor.BusinessAddress</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="font-semibold text-gray-900 text-xs">@vendor.OwnerName</p>
+                                    <p class="text-xs text-gray-500">@vendor.OwnerEmail</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    @switch (vendor.Status)
+                                    {
+                                        case VendorStatus.Active:
+                                            <span class="px-2.5 py-1 text-xs font-bold bg-emerald-100 text-emerald-800 rounded-full">Active</span>
+                                            break;
+                                        case VendorStatus.Pending:
+                                            <span class="px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-800 rounded-full">Pending</span>
+                                            break;
+                                        case VendorStatus.Suspended:
+                                            <span class="px-2.5 py-1 text-xs font-bold bg-red-100 text-red-800 rounded-full">Suspended</span>
+                                            break;
+                                        case VendorStatus.Rejected:
+                                            <span class="px-2.5 py-1 text-xs font-bold bg-rose-100 text-rose-800 rounded-full">Rejected</span>
+                                            break;
+                                        default:
+                                            <span class="px-2.5 py-1 text-xs font-bold bg-gray-100 text-gray-800 rounded-full">@vendor.Status</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="px-6 py-4 text-xs text-gray-500">@vendor.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        @if (vendor.Status != VendorStatus.Active)
+                                        {
+                                            <form asp-area="Admin" asp-controller="Dashboard" asp-action="UpdateVendorStatus" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="vendorId" value="@vendor.VendorId" />
+                                                <input type="hidden" name="status" value="@VendorStatus.Active" />
+                                                <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                                <button type="submit" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition">
+                                                    Activate
+                                                </button>
+                                            </form>
+                                        }
+
+                                        @if (vendor.Status != VendorStatus.Suspended)
+                                        {
+                                            <form asp-area="Admin" asp-controller="Dashboard" asp-action="UpdateVendorStatus" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="vendorId" value="@vendor.VendorId" />
+                                                <input type="hidden" name="status" value="@VendorStatus.Suspended" />
+                                                <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                                <button type="submit" class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition">
+                                                    Suspend
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Footer -->
+            <div class="flex items-center justify-between border-t border-gray-200 px-6 py-4">
+                <p class="text-xs text-gray-500">
+                    Showing page <span class="font-bold text-gray-800">@Model.CurrentPage</span> of <span class="font-bold text-gray-800">@Model.TotalPages</span> (@Model.TotalCount total vendors)
+                </p>
+                <div class="flex items-center gap-2">
+                    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors"
+                       asp-route-statusFilter="@Model.SelectedStatus"
+                       asp-route-searchKeyword="@Model.SearchKeyword"
+                       asp-route-page="@(Model.CurrentPage - 1)"
+                       class="px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded-lg text-gray-600 transition @(!Model.HasPreviousPage ? "opacity-50 pointer-events-none" : "hover:bg-gray-100")">
+                        Previous
+                    </a>
+                    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors"
+                       asp-route-statusFilter="@Model.SelectedStatus"
+                       asp-route-searchKeyword="@Model.SearchKeyword"
+                       asp-route-page="@(Model.CurrentPage + 1)"
+                       class="px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded-lg text-gray-600 transition @(!Model.HasNextPage ? "opacity-50 pointer-events-none" : "hover:bg-gray-100")">
+                        Next
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="p-12 text-center text-gray-500 text-sm">
+                No vendors match the specified criteria.
+            </div>
+        }
+    </div>
+</div>

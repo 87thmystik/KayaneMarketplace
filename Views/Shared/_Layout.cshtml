@@ -1,0 +1,141 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Kayane</title>
+
+    <!-- Tailwind CSS (Compiled Site Styles) -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Kayane.styles.css" asp-append-version="true" />
+
+    <!-- Alpine.js for Interactive Components (Dropdowns, Carousels, Modals) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- Enhanced Navbar Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Brand Logo / Name -->
+            <div class="flex items-center space-x-8">
+                <a class="flex items-center space-x-2 group" asp-area="" asp-controller="Home" asp-action="Index">
+                    <div class="w-8 h-8 bg-linear-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-black text-lg">
+                        K
+                    </div>
+                    <span class="text-2xl font-black text-gray-900 group-hover:text-indigo-600 transition">Kayane</span>
+                </a>
+                <div class="hidden sm:flex space-x-1">
+                    <a class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                    <a class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" asp-area="" asp-controller="Shop" asp-action="Index">Shop</a>
+                    <a class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" asp-area="" asp-controller="Home" asp-action="Privacy">Help</a>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="hidden md:flex flex-1 mx-8">
+                <form asp-area="" asp-controller="Shop" asp-action="Index" method="get" class="w-full max-w-xs">
+                    <input type="text" name="search" placeholder="Search products..."
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none focus:border-indigo-500 transition bg-gray-50" />
+                </form>
+            </div>
+
+            <!-- Auth & Navigation Links -->
+            <div class="flex items-center space-x-4">
+                <!-- Header -->
+                <a class="hidden sm:inline-block text-sm font-medium text-indigo-600 hover:text-indigo-700 transition"
+                   asp-controller="Auth" asp-action="Login">Vendor Portal</a>
+
+                <a class="hidden sm:inline-block text-xs font-semibold text-gray-500 hover:text-gray-800 transition"
+                   asp-controller="Auth" asp-action="RegisterVendor">Sign Up</a>
+                <a class="px-4 py-2 bg-linear-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-sm font-semibold rounded-lg transition shadow-md hover:shadow-lg" asp-controller="Auth" asp-action="Login">Sign In</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Body -->
+    <main role="main" class="grow">
+        @RenderBody()
+    </main>
+
+    <!-- Enhanced Footer -->
+    <footer class="bg-linear-to-b from-slate-900 to-slate-950 text-gray-300 mt-16 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Footer Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 pb-12 mb-12 border-b border-slate-800">
+                <!-- Brand & Tagline -->
+                <div class="md:col-span-2">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-10 h-10 bg-linear-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-black text-lg">
+                            K
+                        </div>
+                        <span class="text-2xl font-black text-white">Kayane</span>
+                    </div>
+                    <p class="text-gray-400 leading-relaxed mb-6">Your trusted multi-vendor marketplace connecting quality products with discerning shoppers. Shop verified vendors or grow your business with us.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-10 h-10 bg-slate-800 hover:bg-indigo-600 rounded-lg flex items-center justify-center transition text-white">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8.29 20v-7.21H5.5V9.25h2.79V7.25c0-2.89 1.96-4.75 4.74-4.75 1.42 0 2.65.11 3.01.15v3.03h-2.11c-1.37 0-1.46.65-1.46 1.59v2.08h2.92l-.6 3.54h-2.32V20z" /></svg>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-slate-800 hover:bg-indigo-600 rounded-lg flex items-center justify-center transition text-white">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.633 7.997c.013.175.013.349.013.523 0 5.325-4.053 11.461-11.46 11.461-2.282 0-4.402-.661-6.186-1.809.324.037.636.05.973.05a8.07 8.07 0 005.001-1.729 4.032 4.032 0 01-3.757-2.793c.249.037.499.062.761.062.361 0 .724-.05 1.061-.171a4.03 4.03 0 01-3.232-3.953v-.05c.537.299 1.159.486 1.616.511a4.029 4.029 0 01-1.798-3.354c0-.748.199-1.434.548-2.032a11.455 11.455 0 008.315 4.202c-.067-.313-.107-.63-.107-.951 0-4.895 3.949-8.864 8.833-8.864 2.54 0 4.831 1.045 6.442 2.738a7.995 7.995 0 002.519-.973 4.032 4.032 0 01-1.771 2.234 8.034 8.034 0 002.281-.623 8.62 8.62 0 01-1.979 2.049z" /></svg>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-slate-800 hover:bg-indigo-600 rounded-lg flex items-center justify-center transition text-white">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0m4.441 16.892c-2.102.144-6.784.144-8.883 0C5.282 16.736 5.017 15.622 5 12c.017-3.629.285-4.736 2.558-4.892 2.099-.144 6.782-.144 8.883 0C18.718 7.264 18.982 8.378 19 12c-.018 3.629-.285 4.736-2.559 4.892zM9.5 15.5v-7l6 3.5-6 3.5z" /></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Shop Column -->
+                <div>
+                    <h4 class="text-white font-bold mb-4">Shop</h4>
+                    <ul class="space-y-2">
+                        <li><a asp-controller="Shop" asp-action="Index" class="text-gray-400 hover:text-indigo-400 transition text-sm">Browse Products</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Best Sellers</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">New Arrivals</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Sale Items</a></li>
+                        <li><a asp-controller="Cart" asp-action="Index" class="text-gray-400 hover:text-indigo-400 transition text-sm">Shopping Cart</a></li>
+                    </ul>
+                </div>
+
+                <!-- Vendors Column -->
+                <div>
+                    <h4 class="text-white font-bold mb-4">For Vendors</h4>
+                    <ul class="space-y-2">
+                        <li><a asp-controller="Auth" asp-action="RegisterVendor" class="text-gray-400 hover:text-indigo-400 transition text-sm">Become a Vendor</a></li>
+                        <li><a asp-controller="Auth" asp-action="Login" class="text-gray-400 hover:text-indigo-400 transition text-sm">Vendor Dashboard</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Seller Tools</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Seller Academy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Pricing</a></li>
+                    </ul>
+                </div>
+
+                <!-- Support Column -->
+                <div>
+                    <h4 class="text-white font-bold mb-4">Support</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Help Center</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Contact Us</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy" class="text-gray-400 hover:text-indigo-400 transition text-sm">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Terms of Service</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Footer Bottom -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
+                <p>&copy; 2026 Kayane Marketplace. All rights reserved.</p>
+                <div class="flex space-x-6">
+                    <a href="#" class="hover:text-indigo-400 transition">System Status</a>
+                    <a href="#" class="hover:text-indigo-400 transition">Accessibility</a>
+                    <a href="#" class="hover:text-indigo-400 transition">Cookie Settings</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)</body>
+</html>

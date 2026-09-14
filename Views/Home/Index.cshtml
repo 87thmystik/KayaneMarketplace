@@ -1,0 +1,163 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Welcome to Kayane Marketplace";
+}
+
+<div class="space-y-12 py-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{ activeSlide: 0, slidesCount: 3 }" x-init="setInterval(() => { activeSlide = (activeSlide + 1) % slidesCount }, 5000)">
+
+    <!-- Hero Banner Carousel -->
+    <div class="relative bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white rounded-3xl overflow-hidden shadow-xl min-h-[380px] flex items-center">
+
+        <!-- Slide 1: Marketplace Overview -->
+        <div class="absolute inset-0 p-8 sm:p-12 flex flex-col justify-center transition-opacity duration-700 ease-in-out" x-show="activeSlide === 0" x-transition.opacity>
+            <div class="max-w-3xl space-y-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-500/30 text-indigo-200 border border-indigo-400/20">
+                    Multi-Vendor Commerce Platform
+                </span>
+                <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight">
+                    Discover Verified Vendors & Quality Products
+                </h1>
+                <p class="text-lg text-indigo-100/90 leading-relaxed">
+                    Kayane connects independent vendors with shoppers in one marketplace. Shop verified listings or launch your own store today.
+                </p>
+                <div class="pt-4 flex flex-wrap gap-4">
+                    <a asp-controller="Shop" asp-action="Index" class="px-6 py-3 bg-indigo-500 hover:bg-indigo-400 text-white font-semibold rounded-xl transition shadow-lg shadow-indigo-500/25">
+                        Explore Marketplace →
+                    </a>
+                    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl border border-white/20 transition backdrop-blur-sm">
+                        Vendor Portal
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Vendor Partner Program -->
+        <div class="absolute inset-0 p-8 sm:p-12 flex flex-col justify-center transition-opacity duration-700 ease-in-out" x-show="activeSlide === 1" x-transition.opacity>
+            <div class="max-w-3xl space-y-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/30 text-emerald-200 border border-emerald-400/20">
+                    Grow Your Business
+                </span>
+                <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight">
+                    Launch Your Storefront on Kayane
+                </h1>
+                <p class="text-lg text-emerald-100/90 leading-relaxed">
+                    Manage your inventory, track analytics, and reach more local customers with our streamlined merchant tools.
+                </p>
+                <div class="pt-4 flex flex-wrap gap-4">
+                    <!-- Updated to point to Auth/RegisterVendor -->
+                    <a asp-controller="Auth" asp-action="RegisterVendor" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition shadow-lg shadow-emerald-600/25">
+                        Apply as Vendor Now →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Secure Shopping & Checkout -->
+        <div class="absolute inset-0 p-8 sm:p-12 flex flex-col justify-center transition-opacity duration-700 ease-in-out" x-show="activeSlide === 2" x-transition.opacity>
+            <div class="max-w-3xl space-y-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-500/30 text-amber-200 border border-amber-400/20">
+                    Seamless Experience
+                </span>
+                <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight">
+                    Fast Checkout & Reliable Delivery
+                </h1>
+                <p class="text-lg text-amber-100/90 leading-relaxed">
+                    Browse collections, add items to your cart, and experience secure transactions from verified sellers.
+                </p>
+                <div class="pt-4 flex flex-wrap gap-4">
+                    <a asp-controller="Cart" asp-action="Index" class="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-white font-semibold rounded-xl transition shadow-lg shadow-amber-500/25">
+                        View Cart & Checkout →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carousel Indicators -->
+        <div class="absolute bottom-4 right-6 z-20 flex items-center space-x-2">
+            <template x-for="i in slidesCount" :key="i">
+                <button @@click="activeSlide = i - 1" :class="{ 'bg-white w-6': activeSlide === (i - 1), 'bg-white/50 w-2.5': activeSlide !== (i - 1) }" class="h-2.5 rounded-full transition-all duration-300"></button>
+            </template>
+        </div>
+    </div>
+
+    <!-- Quick Navigation Hub -->
+    <div class="space-y-6">
+        <div class="flex items-center justify-between">
+            <h2 class="text-2xl font-bold text-gray-900">Kayane Hub</h2>
+            <span class="text-xs text-gray-400 font-medium">Quick access tools & portals</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+            <!-- Storefront Card -->
+            <a asp-controller="Shop" asp-action="Index" class="group bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-500/50 transition flex flex-col justify-between block">
+                <div>
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-bold text-xl mb-4 group-hover:scale-105 transition">
+                        🛍️
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition">Storefront</h3>
+                    <p class="text-sm text-gray-500 mt-2">Browse the product catalog, search by category, and add items to your cart.</p>
+                </div>
+                <span class="mt-6 text-xs font-semibold text-indigo-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    Browse Products →
+                </span>
+            </a>
+
+            <!-- Vendor Dashboard Card -->
+            <a asp-controller="Vendor" asp-action="Dashboard" class="group bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-500/50 transition flex flex-col justify-between block">
+                <div>
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-bold text-xl mb-4 group-hover:scale-105 transition">
+                        📊
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition">Vendor Portal</h3>
+                    <p class="text-sm text-gray-500 mt-2">Manage your inventory, track sales metrics, and submit new product listings.</p>
+                </div>
+                <span class="mt-6 text-xs font-semibold text-emerald-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    Open Dashboard →
+                </span>
+            </a>
+
+            <!-- Shopping Cart Card -->
+            <a asp-controller="Cart" asp-action="Index" class="group bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-500/50 transition flex flex-col justify-between block">
+                <div>
+                    <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center font-bold text-xl mb-4 group-hover:scale-105 transition">
+                        🛒
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition">Shopping Cart</h3>
+                    <p class="text-sm text-gray-500 mt-2">Review queued items, adjust product quantities, and proceed to checkout.</p>
+                </div>
+                <span class="mt-6 text-xs font-semibold text-amber-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    View Cart →
+                </span>
+            </a>
+
+            <!-- Admin Moderation Card -->
+            <a asp-area="" asp-controller="Admin" asp-action="Dashboard" class="group bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-500/50 transition flex flex-col justify-between block">
+                <div>
+                    <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center font-bold text-xl mb-4 group-hover:scale-105 transition">
+                        🛡️
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 group-hover:text-indigo-600 transition">Admin Portal</h3>
+                    <p class="text-sm text-gray-500 mt-2">Review pending vendor submissions, approve products, and manage site platform rules.</p>
+                </div>
+                <span class="mt-6 text-xs font-semibold text-rose-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    Moderate Platform →
+                </span>
+            </a>
+
+        </div>
+    </div>
+
+    <!-- Vendor Callout Banner -->
+    <div class="bg-gradient-to-r from-gray-900 to-slate-800 text-white rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-md border border-gray-800">
+        <div class="space-y-1">
+            <h3 class="text-xl font-bold">Want to sell your products on Kayane?</h3>
+            <p class="text-sm text-gray-400">Register as a vendor partner to reach customers and start taking orders.</p>
+        </div>
+        <!-- Updated to point to Auth/RegisterVendor -->
+        <a asp-controller="Auth" asp-action="RegisterVendor" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition whitespace-nowrap shadow-sm">
+            Apply as Vendor
+        </a>
+    </div>
+
+</div>

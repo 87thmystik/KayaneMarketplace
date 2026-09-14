@@ -1,0 +1,238 @@
+﻿@model Kayane.ViewModels.ProductDetailVM
+@using Kayane.Models
+
+@{
+    ViewData["Title"] = Model.Name;
+    int fullStars = (int)Math.Floor(Model.AverageRating);
+    bool hasHalf = (Model.AverageRating - fullStars) >= 0.5;
+    bool hasVendorStore = !string.IsNullOrWhiteSpace(Model.VendorSlug);
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+
+    <!-- Breadcrumbs -->
+    <nav class="flex text-sm text-gray-500 space-x-2">
+        <a asp-controller="Home" asp-action="Index" class="hover:text-indigo-600">Home</a>
+        <span>/</span>
+        <a asp-controller="Shop" asp-action="Index" class="hover:text-indigo-600">Shop</a>
+        <span>/</span>
+        <span class="text-gray-900 font-semibold truncate">@Model.Name</span>
+    </nav>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-xl font-medium">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-sm rounded-xl font-medium">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Product main panel -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+        <!-- Image -->
+        <div class="space-y-3">
+            <div class="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden flex items-center justify-center border border-gray-200">
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <img src="@Model.ImageUrl" alt="@Model.Name" class="w-full h-full object-cover" />
+                }
+                else
+                {
+                    <div class="text-8xl text-gray-300">📦</div>
+                }
+            </div>
+        </div>
+
+        <!-- Details -->
+        <div class="space-y-6">
+            <div class="space-y-3">
+                @if (hasVendorStore)
+                {
+                    <a asp-controller="Store" asp-action="VendorStore" asp-route-slug="@Model.VendorSlug"
+                       class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-600 hover:text-indigo-800">
+                        🏪 @Model.VendorName
+                    </a>
+                }
+                else
+                {
+                    <span class="inline-block text-xs font-bold uppercase tracking-wider text-indigo-600">
+                        🏪 @Model.VendorName
+                    </span>
+                }
+
+                <h1 class="text-3xl sm:text-4xl font-black text-gray-900 leading-tight">@Model.Name</h1>
+
+                <!-- Rating row -->
+                <div class="flex items-center gap-3 text-sm">
+                    <div class="flex text-yellow-400 text-lg leading-none">
+                        @for (int i = 0; i < fullStars; i++)
+                        {
+                            <span>★</span>
+                        }
+                        @if (hasHalf)
+                        {
+                            <span>⯨</span>
+                        }
+                        @for (int i = fullStars + (hasHalf ? 1 : 0); i < 5; i++)
+                        {
+                            <span class="text-gray-300">★</span>
+                        }
+                    </div>
+                    <span class="text-gray-700 font-semibold">
+                        @if (Model.TotalReviewsCount > 0)
+                        {
+                            @($"{Model.AverageRating:F1} · {Model.TotalReviewsCount} review{(Model.TotalReviewsCount == 1 ? "" : "s")}")
+                        }
+                        else
+                        {
+                            <span class="text-gray-400 font-normal">No reviews yet</span>
+                        }
+                    </span>
+                </div>
+            </div>
+
+            <!-- Price + stock -->
+            <div class="flex items-baseline gap-4">
+                <span class="text-4xl font-black text-indigo-600">₦@Model.Price.ToString("N2")</span>
+            </div>
+
+            <div>
+                @if (Model.Stock > 0)
+                {
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+                        ✓ In Stock (@Model.Stock available)
+                    </span>
+                }
+                else
+                {
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                        ✕ Out of Stock
+                    </span>
+                }
+            </div>
+
+            <div class="pt-4 border-t border-gray-100">
+                <h3 class="font-bold text-gray-900 mb-2">Description</h3>
+                <p class="text-gray-700 leading-relaxed text-sm whitespace-pre-line">
+                    @(string.IsNullOrWhiteSpace(Model.Description) ? "No description provided." : Model.Description)
+                </p>
+            </div>
+
+            <!-- Add to cart -->
+            @if (Model.Stock > 0)
+            {
+                <form asp-controller="Cart" asp-action="AddToCart" method="post" class="space-y-3 pt-4 border-t border-gray-100">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="productId" value="@Model.ProductId" />
+
+                    <label class="block">
+                        <span class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Quantity</span>
+                        <select name="quantity" class="w-32 px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            @for (int i = 1; i <= Math.Min(Model.Stock, 10); i++)
+                            {
+                                <option value="@i">@i</option>
+                            }
+                        </select>
+                    </label>
+
+                    <button type="submit"
+                            class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                        🛒 Add to Cart
+                    </button>
+                </form>
+            }
+
+            @if (hasVendorStore)
+            {
+                <a asp-controller="Store" asp-action="VendorStore" asp-route-slug="@Model.VendorSlug"
+                   class="block w-full text-center py-3 border border-gray-300 hover:border-gray-400 text-gray-700 font-semibold text-sm rounded-xl transition">
+                    Visit @Model.VendorName's Store
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Reviews section -->
+    <div class="pt-8 border-t border-gray-200 space-y-6">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <h2 class="text-2xl font-bold text-gray-900">Customer Reviews</h2>
+            @if (Model.TotalReviewsCount > 0)
+            {
+                <div class="flex items-center gap-2">
+                    <span class="text-yellow-500 text-lg">★</span>
+                    <span class="font-bold text-gray-900 text-lg">@Model.AverageRating.ToString("F1")</span>
+                    <span class="text-sm text-gray-500">(@Model.TotalReviewsCount review@(Model.TotalReviewsCount == 1 ? "" : "s"))</span>
+                </div>
+            }
+        </div>
+
+        @if (Model.CanUserReview)
+        {
+            <div class="bg-gray-50 border border-gray-200 rounded-2xl p-6 space-y-4">
+                <h3 class="font-bold text-gray-900">Leave a Review</h3>
+                <form asp-controller="ProductReviews" asp-action="Submit" method="post" class="space-y-4">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ProductId" value="@Model.ProductId" />
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Rating</label>
+                        <select name="Rating" class="w-full sm:w-56 border border-gray-300 rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="5">★★★★★ (5)</option>
+                            <option value="4">★★★★☆ (4)</option>
+                            <option value="3">★★★☆☆ (3)</option>
+                            <option value="2">★★☆☆☆ (2)</option>
+                            <option value="1">★☆☆☆☆ (1)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Comment</label>
+                        <textarea name="Comment" rows="3" required minlength="3" maxlength="1000"
+                                  class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                  placeholder="Write your thoughts about this product..."></textarea>
+                    </div>
+
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition shadow-sm">
+                        Submit Review
+                    </button>
+                </form>
+            </div>
+        }
+
+        @if (!Model.Reviews.Any())
+        {
+            <p class="text-sm text-gray-500">No reviews yet. Be the first to review this product!</p>
+        }
+        else
+        {
+            <div class="space-y-3">
+                @foreach (var review in Model.Reviews)
+                {
+                    <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-gray-900">@review.CustomerName</span>
+                            <span class="text-xs text-gray-400">@review.CreatedAt.ToString("MMM dd, yyyy")</span>
+                        </div>
+                        <div class="text-yellow-500 text-sm leading-none">
+                            @for (int i = 0; i < review.Rating; i++)
+                            {
+                                <span>★</span>
+                            }
+                            @for (int i = review.Rating; i < 5; i++)
+                            {
+                                <span class="text-gray-300">★</span>
+                            }
+                        </div>
+                        <p class="text-sm text-gray-700 whitespace-pre-line">@review.Comment</p>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,130 @@
+﻿@model IEnumerable<Kayane.Models.PayoutTransaction>
+@using System.Linq
+
+@{
+    ViewData["Title"] = "Vendor Payout Requests";
+}
+
+<div class="w-full px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Back Button -->
+    <div class="mb-4">
+        <a asp-action="Dashboard" style="cursor: pointer;" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition shadow-sm cursor-pointer">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Dashboard
+        </a>
+    </div>
+
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Vendor Payout Requests</h1>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="mb-4 p-4 bg-green-50 border-l-4 border-green-400 text-green-700 rounded-r-lg shadow-sm">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="mb-4 p-4 bg-red-50 border-l-4 border-red-400 text-red-700 rounded-r-lg shadow-sm">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full">
+        <div class="overflow-x-auto w-full">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bank Details</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var tx in Model)
+                        {
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    @tx.CreatedAt.ToLocalTime().ToString("g")
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    @(tx.Vendor?.BusinessName ?? "Unknown Vendor")
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500">
+                                    @if (tx.Vendor != null && !string.IsNullOrEmpty(tx.Vendor.BankName))
+                                    {
+                                        <span class="font-medium text-gray-700">@tx.Vendor.BankName</span> <span class="text-gray-400">-</span> 
+                                        @tx.Vendor.AccountNumber
+                                        <br />
+                                        <span class="text-xs text-gray-400">@tx.Vendor.AccountName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-amber-600 font-semibold italic bg-amber-50 px-2 py-0.5 rounded">Not provided</span>
+                                    }
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                    ₦@tx.Amount.ToString("N2")
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold
+                                        @(tx.Status == "Approved" ? "bg-green-100 text-green-800" :
+                                          tx.Status == "Rejected" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800")">
+                                        @tx.Status
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right text-sm font-medium">
+                                    @if (tx.Status == "Pending")
+                                    {
+                                        <div class="flex items-center justify-end gap-2 w-full">
+                                            <!-- Approve Form -->
+                                            <form asp-action="ProcessPayout" method="post" class="inline-block m-0">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="payoutId" value="@tx.PayoutId" />
+                                                <input type="hidden" name="actionType" value="Approve" />
+                                                <button type="submit" style="background-color: #16a34a; color: white; cursor: pointer;" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-xs font-bold transition shadow-sm inline-block cursor-pointer">
+                                                    Approve
+                                                </button>
+                                            </form>
+
+                                            <!-- Reject Form -->
+                                            <form asp-action="ProcessPayout" method="post" class="inline-block m-0">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="payoutId" value="@tx.PayoutId" />
+                                                <input type="hidden" name="actionType" value="Reject" />
+                                                <button type="submit" style="background-color: #dc2626; color: white; cursor: pointer;" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-bold transition shadow-sm inline-block cursor-pointer">
+                                                    Reject
+                                                </button>
+                                            </form>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-gray-400 text-xs italic">Completed</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">
+                                No payout requests found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

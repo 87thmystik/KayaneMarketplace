@@ -1,0 +1,32 @@
+[
+  {
+    "ContainingType": "Kayane.Controllers.WebhooksController",
+    "Method": "HandlePaymentWebhook",
+    "RelativePath": "api/webhooks/9psb",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Kayane.Controllers.WebhooksController",
+    "Method": "HandlePaymentWebhook",
+    "RelativePath": "api/webhooks/payment",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Kayane.Controllers.WebhooksController",
+    "Method": "HandlePaymentWebhook",
+    "RelativePath": "api/webhooks/paystack",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  }
+]
