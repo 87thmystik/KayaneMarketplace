@@ -306,4 +306,14 @@ public class DashboardController : Controller
     }
 
     #endregion
+
+    [HttpGet]
+    public async Task<IActionResult> Approvals()
+    {
+        ViewBag.PendingPayoutsCount = await _context.PayoutTransactions.CountAsync(p => p.Status == "Pending");
+        ViewBag.PendingVendorsCount = await _context.Vendors.CountAsync(v => v.Status == VendorStatus.Pending);
+        ViewBag.PendingProductsCount = await _context.Products.CountAsync(p => p.Status == ProductStatus.Pending);
+        ViewBag.TotalOrders = await _context.Orders.CountAsync();
+        return View();
+    }
 }

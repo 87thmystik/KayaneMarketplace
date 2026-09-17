@@ -11,16 +11,22 @@
             <h1 class="text-3xl font-extrabold text-gray-900">@Model.Vendor.BusinessName Dashboard</h1>
             <p class="text-sm text-gray-500 mt-1">Manage your store products, earnings, and withdrawal requests.</p>
         </div>
-        <div class="flex items-center gap-3">
-            <a asp-action="EditProfile"
-               class="px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition shadow-sm">
-                Edit Store & Bank Details
-            </a>
-            <a asp-controller="VendorWallet" asp-action="Index"
-               class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
-                View Wallet & Payouts
-            </a>
-        </div>
+        <a asp-action="Products"
+           class="px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition shadow-sm">
+            Manage Products
+        </a>
+        <a asp-action="CreateProduct"
+           class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+            + Add Product
+        </a>
+        <a asp-action="EditProfile"
+           class="px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition shadow-sm">
+            Edit Store & Bank Details
+        </a>
+        <a asp-controller="VendorWallet" asp-action="Index"
+           class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+            View Wallet & Payouts
+        </a>
     </div>
 
     @if (TempData["SuccessMessage"] != null)

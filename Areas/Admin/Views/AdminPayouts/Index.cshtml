@@ -1,0 +1,126 @@
+﻿@model IEnumerable<Kayane.Models.PayoutTransaction>
+@using Kayane.Models
+
+@{
+    ViewData["Title"] = "Admin Payout Requests";
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <div>
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
+           class="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition">
+            ← Back to Admin Dashboard
+        </a>
+    </div>
+
+    <div class="border-b border-gray-200 pb-6">
+        <h1 class="text-3xl font-extrabold text-gray-900">Payout Requests</h1>
+        <p class="text-sm text-gray-500 mt-1">Review and process vendor withdrawal requests.</p>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-xl font-medium">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-sm rounded-xl font-medium">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        @if (Model != null && Model.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-xs uppercase font-semibold text-gray-500 border-b border-gray-200">
+                            <th class="px-6 py-3.5">Date</th>
+                            <th class="px-6 py-3.5">Vendor</th>
+                            <th class="px-6 py-3.5">Bank Details</th>
+                            <th class="px-6 py-3.5">Amount</th>
+                            <th class="px-6 py-3.5">Status</th>
+                            <th class="px-6 py-3.5 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-sm">
+                        @foreach (var tx in Model)
+                        {
+                            <tr class="hover:bg-gray-50/80 transition">
+                                <td class="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">
+                                    @tx.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")
+                                </td>
+                                <td class="px-6 py-4 font-bold text-gray-900">
+                                    @(tx.Vendor?.BusinessName ?? "Unknown Vendor")
+                                </td>
+                                <td class="px-6 py-4 text-xs text-gray-600">
+                                    @if (tx.Vendor != null && !string.IsNullOrEmpty(tx.Vendor.BankName))
+                                    {
+                                        <div class="font-medium text-gray-800">@tx.Vendor.BankName</div>
+                                        <div>@tx.Vendor.AccountNumber</div>
+                                        <div class="text-gray-400">@tx.Vendor.AccountName</div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-amber-600 italic">Not provided</span>
+                                    }
+                                </td>
+                                <td class="px-6 py-4 font-bold text-gray-900 whitespace-nowrap">
+                                    ₦@tx.Amount.ToString("N2")
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold
+                                        @(tx.Status == "Approved" ? "bg-emerald-100 text-emerald-800" :
+                                          tx.Status == "Rejected" ? "bg-rose-100 text-rose-800" :
+                                          tx.Status == "Failed" ? "bg-rose-100 text-rose-800" :
+                                          "bg-amber-100 text-amber-800")">
+                                        @tx.Status
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    @if (tx.Status == "Pending")
+                                    {
+                                        <div class="flex items-center justify-end gap-2">
+                                            <form asp-area="Admin" asp-controller="AdminPayouts" asp-action="ProcessPayout" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="payoutId" value="@tx.PayoutId" />
+                                                <input type="hidden" name="actionType" value="Approve" />
+                                                <button type="submit"
+                                                        class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition">
+                                                    Approve
+                                                </button>
+                                            </form>
+                                            <form asp-area="Admin" asp-controller="AdminPayouts" asp-action="ProcessPayout" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="payoutId" value="@tx.PayoutId" />
+                                                <input type="hidden" name="actionType" value="Reject" />
+                                                <button type="submit"
+                                                        class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg transition">
+                                                    Reject
+                                                </button>
+                                            </form>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-gray-400 italic">Processed</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-12 text-center text-gray-500 text-sm">
+                No payout requests found.
+            </div>
+        }
+    </div>
+</div>

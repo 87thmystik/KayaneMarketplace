@@ -1,0 +1,98 @@
+﻿
+
+@{
+    ViewData["Title"] = "Manage Categories";
+    var categories = ViewData["Categories"] as System.Collections.IEnumerable;
+}
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900">Manage Categories</h1>
+            <p class="text-sm text-gray-500 mt-1">Create categories so vendors can organize products.</p>
+        </div>
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+            ← Back to Admin Dashboard
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm font-medium">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm font-medium">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Create form -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Add a New Category</h2>
+        <form asp-action="Create" method="post" class="flex flex-col sm:flex-row gap-3">
+            @Html.AntiForgeryToken()
+            <input type="text" name="name" required maxlength="100"
+                   placeholder="e.g. Electronics, Fashion, Home & Kitchen..."
+                   class="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <button type="submit"
+                    class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+                Create Category
+            </button>
+        </form>
+    </div>
+
+    <!-- Category list -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900">Existing Categories</h2>
+        </div>
+
+        @{
+            var list = ViewData["Categories"] as System.Collections.Generic.IEnumerable<dynamic>;
+        }
+
+        @if (list == null || !list.Any())
+        {
+            <div class="p-12 text-center text-gray-500 text-sm">
+                No categories yet. Create one above.
+            </div>
+        }
+        else
+        {
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 text-xs uppercase font-semibold text-gray-500 border-b border-gray-200">
+                        <th class="px-6 py-3.5">Name</th>
+                        <th class="px-6 py-3.5">Slug</th>
+                        <th class="px-6 py-3.5">Products</th>
+                        <th class="px-6 py-3.5 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-sm">
+                    @foreach (var c in list)
+                    {
+                        <tr class="hover:bg-gray-50/80 transition">
+                            <td class="px-6 py-4 font-bold text-gray-900">@c.Name</td>
+                            <td class="px-6 py-4 text-gray-500 font-mono text-xs">@c.Slug</td>
+                            <td class="px-6 py-4 text-gray-700">@c.ProductCount</td>
+                            <td class="px-6 py-4 text-right">
+                                <form asp-action="Delete" method="post" class="inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="categoryId" value="@c.CategoryId" />
+                                    <button type="submit"
+                                            class="px-3 py-1 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-semibold rounded-lg transition">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
