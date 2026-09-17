@@ -2,53 +2,75 @@
 
 @{
     ViewData["Title"] = "Edit Product";
+    var hasExistingImage = !string.IsNullOrWhiteSpace(Model.ImageUrl);
 }
 
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
     <div>
         <a asp-action="Products" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">← Back to Products</a>
-        <h1 class="text-3xl font-bold text-gray-900 mt-2">Edit Product</h1>
+        <h1 class="text-3xl font-extrabold text-gray-900 mt-2">Edit Product</h1>
         <p class="text-sm text-gray-500 mt-1">Update your product listing information.</p>
     </div>
 
-    <!-- Moderation Re-approval Warning -->
     <div class="p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl text-xs font-medium">
-        ⚠️ <strong>Note:</strong> Updating product information will reset its status to <strong>Pending</strong> for administrator re-moderation before changes go live.
+        ⚠️ <strong>Note:</strong> Saving changes will reset this product's status to <strong>Pending</strong> for re-moderation.
     </div>
 
-    <form asp-action="EditProduct" method="post" class="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+    <form asp-action="EditProduct" method="post" enctype="multipart/form-data"
+          class="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="ProductId" />
-        <div asp-validation-summary="ModelOnly" class="text-xs font-semibold text-red-600"></div>
+        <input type="hidden" asp-for="ImageUrl" />
+        <div asp-validation-summary="ModelOnly" class="text-xs font-semibold text-rose-600"></div>
+
+        <div>
+            <label asp-for="ImageFile" class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-2">
+                Product Image
+            </label>
+            <div class="flex flex-col sm:flex-row gap-4 items-start">
+                <div class="w-32 h-32 rounded-xl border-2 border-gray-200 flex items-center justify-center bg-gray-50 overflow-hidden shrink-0">
+                    <img id="image-preview" src="@(hasExistingImage ? Model.ImageUrl : "")" alt="Preview"
+                         class="w-full h-full object-cover @(hasExistingImage ? "" : "hidden")" />
+                    <span id="image-placeholder" class="text-3xl text-gray-300 @(hasExistingImage ? "hidden" : "")">📦</span>
+                </div>
+                <div class="flex-1">
+                    <input asp-for="ImageFile" type="file" accept="image/*" onchange="previewImage(event)"
+                           class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" />
+                    <p class="text-xs text-gray-400 mt-2">Leave empty to keep the current image. JPG, PNG or WebP · Max 5 MB.</p>
+                    <span asp-validation-for="ImageFile" class="text-xs text-rose-500 mt-1 block"></span>
+                </div>
+            </div>
+        </div>
 
         <div>
             <label asp-for="Name" class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">Product Title</label>
-            <input asp-for="Name" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-            <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
+            <input asp-for="Name"
+                   class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <span asp-validation-for="Name" class="text-xs text-rose-500 mt-1 block"></span>
         </div>
 
         <div>
             <label asp-for="CategoryId" class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">Category</label>
             <select asp-for="CategoryId" asp-items="Model.Categories"
                     class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
-                <option value="">--Select Category--</option>
+                <option value="">-- Select Category --</option>
             </select>
-            <span asp-validation-for="CategoryId" class="text-xs text-red-500 mt-1 block"></span>
+            <span asp-validation-for="CategoryId" class="text-xs text-rose-500 mt-1 block"></span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-                <label asp-for="Price" class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">Price($)</label>
+                <label asp-for="Price" class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">Price (₦)</label>
                 <input asp-for="Price" type="number" step="0.01" min="0"
                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                <span asp-validation-for="Price" class="text-xs text-red-500 mt-1 block"></span>
+                <span asp-validation-for="Price" class="text-xs text-rose-500 mt-1 block"></span>
             </div>
-
             <div>
                 <label asp-for="Stock" class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">Stock Quantity</label>
                 <input asp-for="Stock" type="number" min="0"
                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                <span asp-validation-for="Stock" class="text-xs text-red-500 mt-1 block"></span>
+                <span asp-validation-for="Stock" class="text-xs text-rose-500 mt-1 block"></span>
             </div>
         </div>
 
@@ -56,7 +78,7 @@
             <label asp-for="Description" class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">Description</label>
             <textarea asp-for="Description" rows="4"
                       class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
-            <span asp-validation-for="Description" class="text-xs text-red-500 mt-1 block"></span>
+            <span asp-validation-for="Description" class="text-xs text-rose-500 mt-1 block"></span>
         </div>
 
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
@@ -67,3 +89,22 @@
         </div>
     </form>
 </div>
+
+@section Scripts {
+    <script>
+        function previewImage(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('image-preview');
+            const placeholder = document.getElementById('image-placeholder');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+}

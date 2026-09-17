@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
 namespace Kayane.ViewModels
@@ -19,8 +20,12 @@ namespace Kayane.ViewModels
         [Required, Range(0, 100000, ErrorMessage = "Stock cannot be negative.")]
         public int Stock { get; set; }
 
+        [Display(Name = "Category")]
         public Guid? CategoryId { get; set; }
 
         public List<SelectListItem> Categories { get; set; } = new();
+
+        public string? ImageUrl { get; set; }
+        public IFormFile? ImageFile { get; set; }
     }
 }

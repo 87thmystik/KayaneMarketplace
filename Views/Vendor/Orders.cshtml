@@ -1,69 +1,75 @@
-﻿@model Kayane.ViewModels.VendorOrderManagementVM
+@model Kayane.ViewModels.VendorOrderManagementVM
 @using Kayane.Models
 
 @{
-    ViewData["Title"] = "Order Fulfillment Dashboard";
+    ViewData["Title"] = "Order Fulfillment";
 }
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-200 pb-4">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-200 pb-6">
         <div>
-            <h1 class="text-2xl font-extrabold text-gray-900">Order Fulfillment Management</h1>
-            <p class="text-sm text-gray-500">Track and fulfill customer order items across different stages.</p>
+            <h1 class="text-3xl font-extrabold text-gray-900">Order Fulfillment</h1>
+            <p class="text-sm text-gray-500 mt-1">Track and fulfill customer orders.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a asp-action="Dashboard"
+               class="text-xs font-semibold text-gray-500 hover:text-gray-800">← Dashboard</a>
+            <span class="text-gray-300">/</span>
+            <a asp-action="Products"
+               class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">Products</a>
         </div>
     </div>
 
-    <!-- Alerts -->
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-xl font-medium shadow-sm">
+        <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-xl font-medium">
             @TempData["SuccessMessage"]
         </div>
     }
-
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="p-4 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl font-medium shadow-sm">
+        <div class="p-4 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl font-medium">
             @TempData["ErrorMessage"]
         </div>
     }
 
-    <!-- Status Filter Tabs -->
+    <!-- Status filter tabs -->
     <div class="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
-        <a class="px-4 py-2 text-xs font-bold rounded-xl transition @(Model.CurrentFilter is null ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")"
-           asp-action="Orders">
+        <a asp-action="Orders"
+           class="px-4 py-2 text-xs font-bold rounded-xl transition @(Model.CurrentFilter is null ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")">
             All Items
         </a>
-        <a class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 @(Model.CurrentFilter == OrderItemStatus.Pending ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")"
-           asp-action="Orders" asp-route-status="@OrderItemStatus.Pending">
-            Pending <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800">@Model.PendingCount</span>
+        <a asp-action="Orders" asp-route-status="@OrderItemStatus.Pending"
+           class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 @(Model.CurrentFilter == OrderItemStatus.Pending ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")">
+            Pending
+            <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800">@Model.PendingCount</span>
         </a>
-        <a class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 @(Model.CurrentFilter == OrderItemStatus.Processing ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")"
-           asp-action="Orders" asp-route-status="@OrderItemStatus.Processing">
-            Processing <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-sky-100 text-sky-800">@Model.ProcessingCount</span>
+        <a asp-action="Orders" asp-route-status="@OrderItemStatus.Processing"
+           class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 @(Model.CurrentFilter == OrderItemStatus.Processing ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")">
+            Processing
+            <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-sky-100 text-sky-800">@Model.ProcessingCount</span>
         </a>
-        <a class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 @(Model.CurrentFilter == OrderItemStatus.Shipped ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")"
-           asp-action="Orders" asp-route-status="@OrderItemStatus.Shipped">
-            Shipped <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-blue-100 text-blue-800">@Model.ShippedCount</span>
+        <a asp-action="Orders" asp-route-status="@OrderItemStatus.Shipped"
+           class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 @(Model.CurrentFilter == OrderItemStatus.Shipped ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")">
+            Shipped
+            <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-blue-100 text-blue-800">@Model.ShippedCount</span>
         </a>
-        <a class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 @(Model.CurrentFilter == OrderItemStatus.Delivered ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")"
-           asp-action="Orders" asp-route-status="@OrderItemStatus.Delivered">
-            Delivered <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-800">@Model.DeliveredCount</span>
+        <a asp-action="Orders" asp-route-status="@OrderItemStatus.Delivered"
+           class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 @(Model.CurrentFilter == OrderItemStatus.Delivered ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")">
+            Delivered
+            <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-800">@Model.DeliveredCount</span>
         </a>
-        <div class="flex items-center gap-3">
-            <a asp-action="Dashboard" asp-controller="Vendor" class="text-xs font-semibold text-gray-500 hover:text-gray-800">← Dashboard</a>
-            <span class="text-gray-300">/</span>
-            <a asp-action="Products" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">Products</a>
-        </div>
     </div>
 
-    <!-- Orders Table Card -->
+    <!-- Orders table -->
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         @if (!Model.OrderItems.Any())
         {
-            <div class="p-12 text-center text-gray-400 text-sm">
-                No order items found for this view.
+            <div class="p-16 text-center space-y-3">
+                <div class="text-5xl">📦</div>
+                <p class="text-gray-500 text-sm">No order items match this filter.</p>
             </div>
         }
         else
@@ -72,64 +78,64 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 text-[11px] uppercase font-bold text-gray-400 border-b border-gray-200 tracking-wider">
-                            <th class="px-6 py-4">Order Ref & Date</th>
-                            <th class="px-6 py-4">Product</th>
-                            <th class="px-6 py-4">Customer & Address</th>
-                            <th class="px-6 py-4">Qty & Total</th>
+                            <th class="px-6 py-4">Order / Date</th>
+                            <th class="px-6 py-4">Product &amp; Customer</th>
+                            <th class="px-6 py-4">Qty &amp; Total</th>
                             <th class="px-6 py-4">Status</th>
-                            <th class="px-6 py-4">Tracking Info</th>
+                            <th class="px-6 py-4">Tracking</th>
                             <th class="px-6 py-4 text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 text-sm">
                         @foreach (var item in Model.OrderItems)
                         {
-                            <tr class="hover:bg-gray-50/80 transition">
+                            <tr class="hover:bg-gray-50/80 transition align-top">
                                 <td class="px-6 py-4">
-                                    <div class="font-bold text-gray-900">#@item.OrderId.ToString().Substring(0, 8)</div>
-                                    <div class="text-xs text-gray-400">@item.OrderDate.ToString("MMM dd, yyyy HH:mm")</div>
+                                    <div class="font-mono font-bold text-xs text-gray-900">
+                                        #@item.OrderId.ToString().Substring(0, 8)
+                                    </div>
+                                    <div class="text-xs text-gray-400">
+                                        @item.OrderDate.ToString("MMM dd, yyyy HH:mm")
+                                    </div>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-6 py-4 space-y-1">
                                     <div class="font-bold text-gray-900">@item.ProductName</div>
-                                    <div class="text-xs text-gray-400">@item.UnitPrice.ToString("C") each</div>
+                                    <div class="text-xs text-gray-500">
+                                        Customer: <span class="font-semibold text-gray-700">@item.CustomerName</span>
+                                    </div>
+                                    <div class="text-xs text-gray-400 truncate max-w-xs">
+                                        Ship to: @item.ShippingAddress
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="font-medium text-gray-800">@item.CustomerName</div>
-                                    <div class="text-xs text-gray-400 max-w-xs truncate">@item.ShippingAddress</div>
+                                    <div class="font-semibold text-gray-800">@item.Quantity unit(s)</div>
+                                    <div class="font-extrabold text-emerald-600">
+                                        @item.TotalPrice.ToString("C")
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="text-gray-700"><span class="font-bold">@item.Quantity</span> unit(s)</div>
-                                    <div class="text-emerald-600 font-extrabold">@item.TotalPrice.ToString("C")</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    @switch (item.Status)
-                                    {
-                                        case OrderItemStatus.Pending:
-                                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">Pending</span>
-                                            break;
-                                        case OrderItemStatus.Processing:
-                                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">Processing</span>
-                                            break;
-                                        case OrderItemStatus.Shipped:
-                                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">Shipped</span>
-                                            break;
-                                        case OrderItemStatus.Delivered:
-                                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Delivered</span>
-                                            break;
-                                        case OrderItemStatus.Cancelled:
-                                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">Cancelled</span>
-                                            break;
-                                    }
+                                    <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-bold
+                                        @(item.Status == OrderItemStatus.Pending ? "bg-amber-100 text-amber-800" :
+                                          item.Status == OrderItemStatus.Processing ? "bg-sky-100 text-sky-800" :
+                                          item.Status == OrderItemStatus.Shipped ? "bg-blue-100 text-blue-800" :
+                                          item.Status == OrderItemStatus.Delivered ? "bg-emerald-100 text-emerald-800" :
+                                          "bg-gray-100 text-gray-700")">
+                                        @item.Status
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 text-xs">
                                     @if (!string.IsNullOrEmpty(item.TrackingNumber))
                                     {
-                                        <div><span class="font-bold text-gray-600">Carrier:</span> @item.ShippingCarrier</div>
-                                        <div><span class="font-bold text-gray-600">Track #:</span> @item.TrackingNumber</div>
+                                        <div class="text-gray-700">
+                                            <span class="font-bold">Carrier:</span> @item.ShippingCarrier
+                                        </div>
+                                        <div class="text-gray-700 font-mono">
+                                            <span class="font-bold">Track#:</span> @item.TrackingNumber
+                                        </div>
                                     }
                                     else
                                     {
-                                        <span class="text-gray-400 italic">None provided</span>
+                                        <span class="text-gray-400 italic">Not yet shipped</span>
                                     }
                                 </td>
                                 <td class="px-6 py-4 text-right">
@@ -139,50 +145,20 @@
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="orderItemId" value="@item.OrderItemId" />
                                             <input type="hidden" name="newStatus" value="@OrderItemStatus.Processing" />
-                                            <button type="submit" class="px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-semibold rounded-xl transition border border-sky-200">
+                                            <button type="submit"
+                                                    class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-lg transition shadow-sm whitespace-nowrap">
                                                 Start Processing
                                             </button>
                                         </form>
                                     }
                                     else if (item.Status == OrderItemStatus.Processing)
                                     {
-                                        <!-- Trigger Modal via Alpine.js or Bootstrap modal attributes -->
-                                        <button type="button" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition shadow-sm"
-                                                data-bs-toggle="modal" data-bs-target="#shipModal-@item.OrderItemId">
+                                        <!-- Alpine modal trigger -->
+                                        <button type="button"
+                                            @@click="$dispatch('open-ship-modal', { id: '@item.OrderItemId', product: @System.Text.Json.JsonSerializer.Serialize(item.ProductName) })"
+                                                class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition shadow-sm whitespace-nowrap">
                                             Mark as Shipped
                                         </button>
-
-                                        <!-- Ship Modal -->
-                                        <div class="modal fade text-left" id="shipModal-@item.OrderItemId" tabindex="-1" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content rounded-2xl border-0 shadow-xl">
-                                                    <form asp-action="UpdateOrderItemStatus" method="post">
-                                                        @Html.AntiForgeryToken()
-                                                        <input type="hidden" name="orderItemId" value="@item.OrderItemId" />
-                                                        <input type="hidden" name="newStatus" value="@OrderItemStatus.Shipped" />
-
-                                                        <div class="modal-header border-b border-gray-100 px-6 py-4">
-                                                            <h5 class="font-bold text-gray-900 text-base">Shipping Details: @item.ProductName</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                        </div>
-                                                        <div class="modal-body p-6 space-y-4">
-                                                            <div>
-                                                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1 text-left">Shipping Carrier</label>
-                                                                <input type="text" name="shippingCarrier" class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. DHL, FedEx, GIG Logistics" required />
-                                                            </div>
-                                                            <div>
-                                                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1 text-left">Tracking Number</label>
-                                                                <input type="text" name="trackingNumber" class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="e.g. TRK-9847294" required />
-                                                            </div>
-                                                        </div>
-                                                        <div class="modal-footer border-t border-gray-100 px-6 py-4 flex gap-2">
-                                                            <button type="button" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition" data-bs-dismiss="modal">Cancel</button>
-                                                            <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition shadow-sm">Confirm & Ship</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
                                     }
                                     else if (item.Status == OrderItemStatus.Shipped)
                                     {
@@ -190,7 +166,8 @@
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="orderItemId" value="@item.OrderItemId" />
                                             <input type="hidden" name="newStatus" value="@OrderItemStatus.Delivered" />
-                                            <button type="submit" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition shadow-sm">
+                                            <button type="submit"
+                                                    class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition shadow-sm whitespace-nowrap">
                                                 Mark as Delivered
                                             </button>
                                         </form>
@@ -208,5 +185,71 @@
                 </table>
             </div>
         }
+    </div>
+</div>
+
+<!-- Shipping Modal (Alpine.js) -->
+<div x-data="{ open: false, orderItemId: '', productName: '' }"
+    @@open-ship-modal.window="open = true; orderItemId = $event.detail.id; productName = $event.detail.product"
+     x-show="open"
+     x-cloak
+     class="fixed inset-0 z-50 flex items-center justify-center p-4">
+
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+    @@click="open = false"
+         x-show="open"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"></div>
+
+    <!-- Modal content -->
+    <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-5"
+         x-show="open"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100">
+
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Ship Item</h3>
+                <p class="text-xs text-gray-500 mt-0.5" x-text="'For: ' + productName"></p>
+            </div>
+            <button type="button" @@click="open = false"
+                    class="text-gray-400 hover:text-gray-700 text-xl leading-none">
+                &times;
+            </button>
+        </div>
+
+        <form asp-action="UpdateOrderItemStatus" method="post" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="orderItemId" :value="orderItemId" />
+            <input type="hidden" name="newStatus" value="@OrderItemStatus.Shipped" />
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Shipping Carrier</label>
+                <input type="text" name="shippingCarrier" required
+                       placeholder="e.g. DHL, FedEx, GIG Logistics"
+                       class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Tracking Number</label>
+                <input type="text" name="trackingNumber" required
+                       placeholder="e.g. TRK-9847294"
+                       class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button type="button" @@click="open = false"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition shadow-sm">
+                    Confirm &amp; Ship
+                </button>
+            </div>
+        </form>
     </div>
 </div>

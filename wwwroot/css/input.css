@@ -1,6 +1,4 @@
-﻿@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+﻿@import "tailwindcss";
 
 /* Custom Animations */
 @layer utilities {
@@ -151,11 +149,11 @@ select {
   @apply transition-all duration-200;
 }
 
-input:focus,
-textarea:focus,
-select:focus {
-  @apply ring-2 ring-indigo-500 ring-opacity-50;
-}
+    input:focus,
+    textarea:focus,
+    select:focus {
+        @apply ring-2 ring-indigo-500;
+    }
 
 /* Button improvements */
 button {

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Kayane.Models
 {
-    public class PayoutTransaction
+    public class  PayoutTransaction
     {
         [Key]
         public Guid PayoutId { get; set; } = Guid.NewGuid();

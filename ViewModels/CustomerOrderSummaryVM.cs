@@ -10,5 +10,7 @@ public class CustomerOrderSummaryVM
     public OrderStatus Status { get; set; }
     public PaymentStatus PaymentStatus { get; set; }
     public int ItemCount { get; set; }
+
+    public string ShippingState { get; set; } = "Processing";
 }
 

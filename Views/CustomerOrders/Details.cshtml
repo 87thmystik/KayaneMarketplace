@@ -1,27 +1,39 @@
-﻿@model Kayane.ViewModels.CustomerOrderDetailVM
+@model Kayane.ViewModels.CustomerOrderDetailVM
+@using Kayane.Models
 
 @{
     ViewData["Title"] = $"Order Details - {Model.OrderId.ToString().Substring(0, 8)}";
 }
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-4">
         <div>
-            <div class="flex items-center gap-3">
-                <h1 class="text-3xl font-bold text-gray-900">Order #@Model.OrderId.ToString().Substring(0, 8)...</h1>
-                <span class="px-3 py-1 text-xs font-semibold rounded-full @(Model.PaymentStatus == PaymentStatus.Success ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200")">
+            <div class="flex items-center gap-3 flex-wrap">
+                <h1 class="text-3xl font-bold text-gray-900">
+                    Order #@Model.OrderId.ToString().Substring(0, 8)
+                </h1>
+                <span class="px-3 py-1 text-xs font-semibold rounded-full
+                    @(Model.PaymentStatus == PaymentStatus.Success
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        : "bg-amber-50 text-amber-700 border border-amber-200")">
                     @Model.PaymentStatus
                 </span>
             </div>
-            <p class="text-sm text-gray-500 mt-1">Placed on @Model.CreatedAt.ToString("MMMM dd, yyyy @ h:mm tt") via @Model.PaymentMethod</p>
+            <p class="text-sm text-gray-500 mt-1">
+                Placed on @Model.CreatedAt.ToString("MMMM dd, yyyy @ h:mm tt") via @Model.PaymentMethod
+            </p>
         </div>
-        <a asp-action="Index" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 hover:border-gray-400 rounded-xl text-sm font-semibold text-gray-700 bg-white transition shadow-sm w-fit">
+        <a asp-action="Index"
+           class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 hover:border-gray-400 rounded-xl text-sm font-semibold text-gray-700 bg-white transition shadow-sm w-fit">
             &larr; Back to Orders
         </a>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Order Items Breakdown -->
+
+        <!-- Items -->
         <div class="lg:col-span-2 space-y-6">
             <div class="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
                 <h2 class="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Purchased Items</h2>
@@ -29,19 +41,51 @@
                 <div class="divide-y divide-gray-100">
                     @foreach (var item in Model.Items)
                     {
-                        <div class="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 first:pt-0 last:pb-0">
-                            <div>
-                                <h3 class="font-bold text-gray-900 text-base">@item.ProductName</h3>
-                                <p class="text-xs text-gray-500 mt-0.5">Quantity: @item.Quantity × $@item.UnitPrice.ToString("F2")</p>
+                        <div class="py-4 space-y-2 first:pt-0 last:pb-0">
+                            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                <div>
+                                    <h3 class="font-bold text-gray-900 text-base">@item.ProductName</h3>
+                                    <p class="text-xs text-gray-500 mt-0.5">
+                                        Quantity: @item.Quantity × @item.UnitPrice.ToString("C")
+                                    </p>
+                                </div>
+                                <span class="font-bold text-gray-900 text-base whitespace-nowrap">
+                                    @item.TotalPrice.ToString("C")
+                                </span>
                             </div>
-                            <span class="font-bold text-gray-900 text-base">$@item.TotalPrice.ToString("F2")</span>
+
+                            <!-- Status + tracking -->
+                            <div class="flex flex-wrap items-center gap-2 pt-1">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold
+                                    @(item.Status == OrderItemStatus.Pending ? "bg-amber-100 text-amber-800" :
+                                      item.Status == OrderItemStatus.Processing ? "bg-blue-100 text-blue-800" :
+                                      item.Status == OrderItemStatus.Shipped ? "bg-indigo-100 text-indigo-800" :
+                                      item.Status == OrderItemStatus.Delivered ? "bg-emerald-100 text-emerald-800" :
+                                      "bg-gray-100 text-gray-700")">
+                                    @item.Status
+                                </span>
+
+                                @if (!string.IsNullOrEmpty(item.ShippingCarrier))
+                                {
+                                    <span class="text-xs text-gray-600">
+                                        via <span class="font-semibold">@item.ShippingCarrier</span>
+                                    </span>
+                                }
+
+                                @if (!string.IsNullOrEmpty(item.TrackingNumber))
+                                {
+                                    <span class="text-xs font-mono text-gray-700 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded">
+                                        @item.TrackingNumber
+                                    </span>
+                                }
+                            </div>
                         </div>
                     }
                 </div>
             </div>
         </div>
 
-        <!-- Customer & Shipping Summary Sidebar -->
+        <!-- Sidebar -->
         <div class="space-y-6">
             <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <h2 class="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Shipping & Contact</h2>
@@ -53,7 +97,7 @@
                     </div>
                     <div>
                         <span class="block text-xs font-semibold uppercase tracking-wider text-gray-400">Email Address</span>
-                        <p class="font-medium text-gray-900 mt-0.5">@Model.CustomerEmail</p>
+                        <p class="font-medium text-gray-900 mt-0.5 break-all">@Model.CustomerEmail</p>
                     </div>
                     <div>
                         <span class="block text-xs font-semibold uppercase tracking-wider text-gray-400">Phone Number</span>
@@ -69,11 +113,13 @@
             <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 shadow-sm space-y-3">
                 <div class="flex justify-between items-center text-sm text-indigo-900 font-medium">
                     <span>Overall Status</span>
-                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-700">@Model.Status</span>
+                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-700">
+                        @Model.Status
+                    </span>
                 </div>
                 <div class="flex justify-between items-center text-base font-bold text-indigo-950 border-t border-indigo-200 pt-3">
                     <span>Total Paid</span>
-                    <span>$@Model.TotalAmount.ToString("F2")</span>
+                    <span>@Model.TotalAmount.ToString("C")</span>
                 </div>
             </div>
         </div>

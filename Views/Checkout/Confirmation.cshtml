@@ -1,4 +1,4 @@
-﻿@model Kayane.Models.Order
+@model Kayane.Models.Order
 
 @{
     ViewData["Title"] = "Order Confirmation";
@@ -42,10 +42,10 @@
                         <div>
                             <p class="font-bold text-gray-900 text-sm">@(item.Product?.Name ?? "Product Item")</p>
                             <p class="text-xs text-gray-500">
-                                Qty: @item.Quantity × $@item.UnitPrice.ToString("F2")
+                                Qty: @item.Quantity × @item.UnitPrice.ToString("C")
                             </p>
                         </div>
-                        <span class="font-semibold text-gray-900 text-sm">$@item.TotalPrice.ToString("F2")</span>
+                        <span class="font-semibold text-gray-900 text-sm">@item.TotalPrice.ToString("C")</span>
                     </div>
                 }
             </div>
@@ -61,7 +61,7 @@
                 </div>
                 <div class="border-t border-gray-100 pt-3 flex justify-between text-base font-bold text-gray-900">
                     <span>Total Amount</span>
-                    <span class="text-indigo-600">$@Model.TotalAmount.ToString("F2")</span>
+                    <span class="text-indigo-600">@Model.TotalAmount.ToString("C")</span>
                 </div>
             </div>
         </div>

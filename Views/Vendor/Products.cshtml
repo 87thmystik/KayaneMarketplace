@@ -1,4 +1,4 @@
-﻿@model List<Kayane.ViewModels.VendorProductListItemVM>
+@model List<Kayane.ViewModels.VendorProductListItemVM>
 @using Kayane.Models
 
 @{
@@ -62,7 +62,7 @@
                             <tr class="hover:bg-gray-50/80 transition">
                                 <td class="px-6 py-4 font-bold text-gray-900">@item.Name</td>
                                 <td class="px-6 py-4 text-gray-600">@item.CategoryName</td>
-                                <td class="px-6 py-4 font-semibold text-gray-900">$@item.Price.ToString("F2")</td>
+                                <td class="px-6 py-4 font-semibold text-gray-900">@item.Price.ToString("C")</td>
                                 <td class="px-6 py-4">
                                     <form asp-action="UpdateStock" method="post" class="flex items-center gap-2">
                                         @Html.AntiForgeryToken()

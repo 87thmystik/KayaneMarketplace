@@ -1,4 +1,4 @@
-﻿@model Kayane.Models.OrderConfirmationVM
+@model Kayane.Models.OrderConfirmationVM
 @{
     ViewData["Title"] = "Order Confirmation";
 }
@@ -28,7 +28,7 @@
         </div>
         <div class="flex justify-between pt-2 text-base font-extrabold">
             <span>Total Amount Paid:</span>
-            <span class="text-emerald-600">&#8358;@Model.TotalAmount.ToString("N2")</span>
+            <span class="text-emerald-600">@Model.TotalAmount.ToString("C")</span>
         </div>
     </div>
 

@@ -17,4 +17,8 @@ public class  VendorDashboardVM
     public decimal TotalEarnings { get; set; }
     public IEnumerable<PayoutTransaction> RecentTransactions { get; set; } = new List<PayoutTransaction>();
     public List<VendorProductListItemVM> RecentProducts { get; set; } = new();
+
+    //how many order items are still awaiting fulfillment
+    public int PendingOrdersCount { get; set; }
+
 }

@@ -1,4 +1,4 @@
-﻿@model List<Kayane.Models.Product>
+@model List<Kayane.Models.Product>
 @using Kayane.Models
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
@@ -73,7 +73,7 @@
                                     @(product.Category?.Name ?? "Uncategorized")
                                 </td>
                                 <td class="px-6 py-4 font-semibold text-gray-900">
-                                    $@product.Price.ToString("F2")
+                                    @product.Price.ToString("C")
                                 </td>
                                 <td class="px-6 py-4 text-gray-700">
                                     @product.Stock units

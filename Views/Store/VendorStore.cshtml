@@ -1,109 +1,152 @@
 ﻿@model Kayane.ViewModels.VendorStorefrontVM
+
 @{
-    ViewData["Title"] = Model.BusinessName + " Store";
+    ViewData["Title"] = Model.BusinessName + " — Store";
+    var banner = string.IsNullOrWhiteSpace(Model.BannerUrl)
+        ? "/images/default-vendor-banner.jpg"
+        : Model.BannerUrl;
+    var logo = string.IsNullOrWhiteSpace(Model.LogoUrl)
+        ? "/images/default-vendor-logo.png"
+        : Model.LogoUrl;
 }
 
-<!-- Vendor Store Header / Banner -->
-<div class="position-relative bg-dark text-white rounded-3 overflow-hidden mb-4 shadow-sm">
-    @{
-        var banner = string.IsNullOrWhiteSpace(Model.BannerUrl)
-            ? "/images/default-vendor-banner.jpg"
-            : Model.BannerUrl;
-    }
-    <div style="height: 220px; background: url('@banner') center/cover no-repeat; filter: brightness(0.6);"></div>
-    <div class="position-absolute bottom-0 start-0 p-4 d-flex align-items-end gap-3 w-100 bg-gradient">
-        <img src="@Model.LogoUrl" alt="@Model.BusinessName" class="rounded-circle border border-3 border-white shadow" style="width: 90px; height: 90px; object-fit: cover;" />
-        <div class="flex-grow-1">
-            <h1 class="h2 mb-1 fw-bold text-white">@Model.BusinessName</h1>
-            <p class="mb-1 text-white-50 small">@Model.Description</p>
-            <div class="d-flex align-items-center gap-3 text-white-50 small">
-                <span><i class="fa fa-star text-warning me-1"></i><strong>@Model.AverageRating</strong> (@Model.TotalReviews reviews)</span>
-                <span><i class="fa fa-box me-1"></i><strong>@Model.TotalProductsCount</strong> Products</span>
-                <span><i class="fa fa-calendar me-1"></i>Member since @Model.MemberSince.ToString("MMM yyyy")</span>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Banner -->
+    <div class="relative rounded-3xl overflow-hidden shadow-sm border border-gray-200">
+        <div class="h-56 sm:h-64 bg-slate-900" style="background-image: url('@banner'); background-size: cover; background-position: center;">
+            <div class="w-full h-full bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+        </div>
+
+        <div class="absolute bottom-0 left-0 right-0 p-6 flex items-end gap-4">
+            <img src="@logo" alt="@Model.BusinessName"
+                 class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-lg object-cover bg-white" />
+
+            <div class="flex-1 min-w-0 text-white">
+                <h1 class="text-2xl sm:text-3xl font-black truncate">@Model.BusinessName</h1>
+                @if (!string.IsNullOrWhiteSpace(Model.Description))
+                {
+                    <p class="text-sm text-white/80 mt-1 line-clamp-1">@Model.Description</p>
+                }
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/70 mt-2">
+                    <span>⭐ <strong class="text-white">@Model.AverageRating.ToString("F1")</strong> (@Model.TotalReviews reviews)</span>
+                    <span>📦 <strong class="text-white">@Model.TotalProductsCount</strong> products</span>
+                    <span>📅 Member since @Model.MemberSince.ToString("MMM yyyy")</span>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <!-- Category Filter Sidebar -->
-    <div class="col-md-3 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light fw-bold">Categories</div>
-            <div class="list-group list-group-flush">
-                <a asp-action="VendorStore" asp-route-slug="@Model.Slug"
-                   class="list-group-item list-group-item-action @(string.IsNullOrEmpty(Model.SelectedCategory) ? "active fw-bold" : "")">
-                    All Products
-                </a>
-                @foreach (var cat in Model.AvailableCategories)
-                {
-                    <a asp-action="VendorStore" asp-route-slug="@Model.Slug" asp-route-category="@cat"
-                       class="list-group-item list-group-item-action @(Model.SelectedCategory == cat ? "active fw-bold" : "")">
-                        @cat
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+        <!-- Sidebar -->
+        <aside class="space-y-4">
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Categories</h2>
+                </div>
+                <div class="p-2 space-y-1">
+                    <a asp-action="VendorStore" asp-route-slug="@Model.Slug"
+                       class="block px-3 py-2 rounded-lg text-sm font-medium transition
+                        @(string.IsNullOrEmpty(Model.SelectedCategory) ? "bg-indigo-50 text-indigo-700" : "text-gray-700 hover:bg-gray-50")">
+                        All Products
                     </a>
-                }
-            </div>
-        </div>
-
-        @if (!string.IsNullOrEmpty(Model.SupportEmail) || !string.IsNullOrEmpty(Model.SupportPhone))
-        {
-            <div class="card shadow-sm mt-3">
-                <div class="card-header bg-light fw-bold">Store Contact</div>
-                <div class="card-body small">
-                    @if (!string.IsNullOrEmpty(Model.SupportEmail))
+                    @foreach (var cat in Model.AvailableCategories)
                     {
-                        <div class="mb-2"><i class="fa fa-envelope me-2 text-muted"></i>@Model.SupportEmail</div>
-                    }
-                    @if (!string.IsNullOrEmpty(Model.SupportPhone))
-                    {
-                        <div><i class="fa fa-phone me-2 text-muted"></i>@Model.SupportPhone</div>
+                        <a asp-action="VendorStore" asp-route-slug="@Model.Slug" asp-route-category="@cat"
+                           class="block px-3 py-2 rounded-lg text-sm font-medium transition
+                            @(Model.SelectedCategory == cat ? "bg-indigo-50 text-indigo-700" : "text-gray-700 hover:bg-gray-50")">
+                            @cat
+                        </a>
                     }
                 </div>
             </div>
-        }
-    </div>
 
-    <!-- Product Grid -->
-    <div class="col-md-9">
-        @if (!Model.Products.Any())
-        {
-            <div class="alert alert-light text-center border py-5">
-                <i class="fa fa-box-open fa-3x text-muted mb-3"></i>
-                <p class="mb-0">No approved products available in this store section.</p>
-            </div>
-        }
-        else
-        {
-            <div class="row row-cols-1 row-cols-md-3 g-4">
-                @foreach (var product in Model.Products)
-                {
-                    <div class="col">
-                        <div class="card h-100 shadow-sm border-0">
-                            <img src="@(product.ImageUrl ?? "/images/product-placeholder.png")" class="card-img-top p-3" alt="@product.Name" style="height: 180px; object-fit: contain;" />
-                            <div class="card-body d-flex flex-column">
-                                <span class="badge bg-light text-dark align-self-start mb-2 border">@product.CategoryName</span>
-                                <h6 class="card-title text-truncate fw-bold mb-1">@product.Name</h6>
-                                <div class="text-success fw-bold fs-5 mb-2">@product.Price.ToString("C")</div>
-                                <div class="mt-auto d-flex gap-2">
-                                    <a asp-controller="Products" asp-action="Details" asp-route-id="@product.ProductId" class="btn btn-sm btn-outline-secondary w-100">
-                                        View Details
-                                    </a>
-                                    <form asp-controller="Cart" asp-action="AddToCart" method="post" class="w-100">
+            @if (!string.IsNullOrEmpty(Model.SupportEmail) || !string.IsNullOrEmpty(Model.SupportPhone))
+            {
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">Contact</h2>
+                    </div>
+                    <div class="p-4 space-y-2 text-sm">
+                        @if (!string.IsNullOrEmpty(Model.SupportEmail))
+                        {
+                            <div class="flex items-center gap-2 text-gray-700">
+                                <span>✉</span>
+                                <a href="mailto:@Model.SupportEmail" class="hover:text-indigo-600 truncate">@Model.SupportEmail</a>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.SupportPhone))
+                        {
+                            <div class="flex items-center gap-2 text-gray-700">
+                                <span>☎</span>
+                                <span>@Model.SupportPhone</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </aside>
+
+        <!-- Products -->
+        <main class="lg:col-span-3">
+            @if (!Model.Products.Any())
+            {
+                <div class="bg-white rounded-2xl border border-gray-200 p-16 text-center space-y-3">
+                    <div class="text-5xl">📦</div>
+                    <p class="text-gray-500 text-sm">No products available in this section yet.</p>
+                </div>
+            }
+            else
+            {
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach (var product in Model.Products)
+                    {
+                        <div class="group bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg hover:border-indigo-300 overflow-hidden transition flex flex-col justify-between">
+                            <a asp-controller="Storefront" asp-action="Details" asp-route-id="@product.ProductId"
+                               class="block h-44 bg-gray-100 flex items-center justify-center overflow-hidden">
+                                @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                {
+                                    <img src="@product.ImageUrl" alt="@product.Name"
+                                         class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                                }
+                                else
+                                {
+                                    <span class="text-5xl">📦</span>
+                                }
+                            </a>
+
+                            <div class="p-4 flex flex-col grow space-y-2">
+                                <span class="text-[10px] uppercase font-bold tracking-wider text-gray-500">
+                                    @product.CategoryName
+                                </span>
+                                <a asp-controller="Storefront" asp-action="Details" asp-route-id="@product.ProductId"
+                                   class="font-bold text-gray-900 hover:text-indigo-600 line-clamp-2 text-sm">
+                                    @product.Name
+                                </a>
+
+                                <div class="flex items-center gap-2 text-xs text-gray-500">
+                                    <span class="text-yellow-400">★</span>
+                                    <span>@product.AverageRating.ToString("F1") (@product.ReviewCount)</span>
+                                </div>
+
+                                <div class="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between">
+                                    <span class="text-lg font-black text-indigo-600">@product.Price.ToString("C")</span>
+                                    <form asp-controller="Cart" asp-action="AddToCart" method="post">
                                         @Html.AntiForgeryToken()
-                                        <a asp-controller="Storefront" asp-action="Details" asp-route-id="@product.ProductId" class="btn btn-sm btn-outline-secondary w-100">
-                                            View Details
-                                        </a>
+                                        <input type="hidden" name="productId" value="@product.ProductId" />
                                         <input type="hidden" name="quantity" value="1" />
-                                        <button type="submit" class="btn btn-sm btn-primary w-100">
-                                            <i class="fa fa-cart-plus me-1"></i> Add
+                                        <button type="submit"
+                                                class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition shadow-sm">
+                                            + Cart
                                         </button>
                                     </form>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                }
-            </div>
-        }
+                    }
+                </div>
+            }
+        </main>
     </div>
 </div>

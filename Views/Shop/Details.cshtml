@@ -1,4 +1,4 @@
-﻿@model Kayane.ViewModels.ProductDetailVM
+@model Kayane.ViewModels.ProductDetailVM
 @using Kayane.Models
 
 @{
@@ -99,7 +99,7 @@
 
             <!-- Price + stock -->
             <div class="flex items-baseline gap-4">
-                <span class="text-4xl font-black text-indigo-600">₦@Model.Price.ToString("N2")</span>
+                <span class="text-4xl font-black text-indigo-600">@Model.Price.ToString("C")</span>
             </div>
 
             <div>

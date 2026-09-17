@@ -3,6 +3,7 @@ using Kayane.Models;
 using Kayane.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Kayane.Controllers;
 
@@ -13,6 +14,65 @@ public class StorefrontController : Controller
     public StorefrontController(KayaneDb context)
     {
         _context = context;
+    }
+
+    // GET: /Storefront/Details/{id}
+    [HttpGet]
+    public async Task<IActionResult> Details(Guid id)
+    {
+        var product = await _context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Vendor)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.ProductId == id
+                                      && p.Status == ProductStatus.Approved);
+
+        if (product == null || product.Vendor == null) return NotFound();
+
+        var reviews = await _context.ProductReviews
+            .AsNoTracking()
+            .Where(r => r.ProductId == id)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+
+        double avgRating = reviews.Count > 0 ? reviews.Average(r => (double)r.Rating) : 0.0;
+
+        bool canReview = false;
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(userIdClaim, out var userId))
+        {
+            var hasPurchased = await _context.OrderItems
+                .AsNoTracking()
+                .Include(oi => oi.Order)
+                .AnyAsync(oi => oi.ProductId == id
+                                && oi.Order.UserId == userId
+                                && oi.Order.PaymentStatus == PaymentStatus.Success);
+
+            var alreadyReviewed = await _context.ProductReviews
+                .AsNoTracking()
+                .AnyAsync(r => r.ProductId == id && r.UserId == userId);
+
+            canReview = hasPurchased && !alreadyReviewed;
+        }
+
+        var vm = new ProductDetailVM
+        {
+            ProductId = product.ProductId,
+            Name = product.Name,
+            Description = product.Description ?? string.Empty,
+            Price = product.Price,
+            Stock = product.Stock,
+            ImageUrl = product.ImageUrl ?? string.Empty,
+            VendorId = product.Vendor.VendorId,
+            VendorName = product.Vendor.BusinessName,
+            VendorSlug = product.Vendor.Slug,
+            AverageRating = avgRating,
+            TotalReviewsCount = reviews.Count,
+            Reviews = reviews,
+            CanUserReview = canReview
+        };
+
+        return View(vm);
     }
 
     // GET: /store/{slug}

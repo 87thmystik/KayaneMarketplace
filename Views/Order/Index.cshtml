@@ -1,4 +1,4 @@
-﻿@model Kayane.ViewModels.VendorOrderManagementVM
+@model Kayane.ViewModels.VendorOrderManagementVM
 @{
     ViewData["Title"] = "Manage Vendor Orders";
 }
@@ -78,7 +78,7 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="font-semibold text-gray-800">@item.Quantity unit(s)</div>
-                                    <div class="font-extrabold text-emerald-600">&#8358;@item.TotalPrice.ToString("N2")</div>
+                                    <div class="font-extrabold text-emerald-600">@item.TotalPrice.ToString("C")</div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-bold

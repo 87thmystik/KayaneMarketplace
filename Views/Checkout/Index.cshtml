@@ -1,4 +1,4 @@
-﻿@model Kayane.ViewModels.CheckoutVM
+@model Kayane.ViewModels.CheckoutVM
 
 @{
     ViewData["Title"] = "Checkout";
@@ -85,9 +85,9 @@
                         <div class="flex items-center justify-between pt-3 text-sm">
                             <div>
                                 <p class="font-bold text-gray-900">@item.Name</p>
-                                <p class="text-xs text-gray-500">Qty: @item.Quantity × $@item.Price.ToString("F2")</p>
+                                <p class="text-xs text-gray-500">Qty: @item.Quantity × @item.Price.ToString("C")</p>
                             </div>
-                            <span class="font-semibold text-gray-900">$@item.Total.ToString("F2")</span>
+                            <span class="font-semibold text-gray-900">@item.Total.ToString("C")</span>
                         </div>
                     }
                 </div>
@@ -95,7 +95,7 @@
                 <div class="border-t border-gray-100 pt-4 space-y-2 text-sm text-gray-600">
                     <div class="flex justify-between">
                         <span>Subtotal</span>
-                        <span class="font-semibold text-gray-900">$@Model.Cart.GrandTotal.ToString("F2")</span>
+                        <span class="font-semibold text-gray-900">@Model.Cart.GrandTotal.ToString("C")</span>
                     </div>
                     <div class="flex justify-between">
                         <span>Shipping Fee</span>
@@ -103,7 +103,7 @@
                     </div>
                     <div class="border-t border-gray-100 pt-3 flex justify-between text-base font-bold text-gray-900">
                         <span>Total Due</span>
-                        <span class="text-indigo-600">$@Model.Cart.GrandTotal.ToString("F2")</span>
+                        <span class="text-indigo-600">@Model.Cart.GrandTotal.ToString("C")</span>
                     </div>
                 </div>
 

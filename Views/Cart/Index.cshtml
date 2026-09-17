@@ -1,4 +1,4 @@
-﻿@model Kayane.ViewModels.CartVM
+@model Kayane.ViewModels.CartVM
 @{
     ViewData["Title"] = "Shopping Cart & Checkout";
 }
@@ -45,9 +45,9 @@
                             {
                                 <tr class="hover:bg-gray-50/50 transition">
                                     <td class="px-6 py-4 font-bold text-gray-900">@item.ProductName</td>
-                                    <td class="px-6 py-4 text-gray-600">&#8358;@item.UnitPrice.ToString("N2")</td>
+                                    <td class="px-6 py-4 text-gray-600">@item.UnitPrice.ToString("C")</td>
                                     <td class="px-6 py-4 text-gray-600">@item.Quantity</td>
-                                    <td class="px-6 py-4 text-right font-extrabold text-emerald-600">&#8358;@item.TotalPrice.ToString("N2")</td>
+                                    <td class="px-6 py-4 text-right font-extrabold text-emerald-600">@item.TotalPrice.ToString("C")</td>
                                 </tr>
                             }
                         </tbody>
@@ -57,45 +57,73 @@
 
             <!-- Checkout Summary & Form -->
             <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-6 h-fit">
-                <h2 class="text-lg font-bold text-gray-900 border-b pb-3">Checkout Details</h2>
+                <h2 class="text-lg font-bold text-gray-900 border-b pb-3">Checkout</h2>
 
-                <form asp-controller="Checkout" asp-action="Process" method="post" class="space-y-4">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="TotalAmount" value="@Model.GrandTotal" />
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <form asp-controller="Checkout" asp-action="Process" method="post" class="space-y-4">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="TotalAmount" value="@Model.GrandTotal" />
 
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Full Name</label>
-                        <input type="text" name="CustomerName" required placeholder="John Doe"
-                               class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Full Name</label>
+                            <input type="text" name="CustomerName" required placeholder="John Doe"
+                                   value="@User.Identity.Name"
+                                   class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Email Address</label>
+                            <input type="email" name="CustomerEmail" required placeholder="john@example.com"
+                                   value="@User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value"
+                                   class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Phone Number</label>
+                            <input type="text" name="CustomerPhone" required placeholder="+234 800 000 0000"
+                                   class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Shipping Address</label>
+                            <textarea name="ShippingAddress" required rows="2" placeholder="Street address, city, state"
+                                      class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-100 flex items-center justify-between text-base font-extrabold text-gray-900">
+                            <span>Grand Total:</span>
+                            <span class="text-emerald-600">@Model.GrandTotal.ToString("C")</span>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition shadow-sm">
+                            Proceed to Secure Payment
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <div class="space-y-4">
+                        <p class="text-sm text-gray-600">
+                            Please sign in to complete your purchase. Your cart will be saved.
+                        </p>
+                        <div class="pt-2 border-t border-gray-100 flex items-center justify-between text-base font-extrabold text-gray-900">
+                            <span>Grand Total:</span>
+                            <span class="text-emerald-600">@Model.GrandTotal.ToString("C")</span>
+                        </div>
+                        <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="/Checkout"
+                           class="block text-center w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition shadow-sm">
+                            Sign In to Checkout
+                        </a>
+                        <p class="text-xs text-center text-gray-500">
+                            Don't have an account?
+                            <a asp-controller="Auth" asp-action="Register" asp-route-returnUrl="/Checkout"
+                               class="text-indigo-600 font-semibold hover:underline">
+                                Create one
+                            </a>
+                        </p>
                     </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Email Address</label>
-                        <input type="email" name="CustomerEmail" required placeholder="john@example.com"
-                               class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Phone Number</label>
-                        <input type="text" name="CustomerPhone" required placeholder="+234 800 000 0000"
-                               class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Shipping Address</label>
-                        <textarea name="ShippingAddress" required rows="2" placeholder="Street address, city, state"
-                                  class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
-                    </div>
-
-                    <div class="pt-4 border-t border-gray-100 flex items-center justify-between text-base font-extrabold text-gray-900">
-                        <span>Grand Total:</span>
-                        <span class="text-emerald-600">&#8358;@Model.GrandTotal.ToString("N2")</span>
-                    </div>
-
-                    <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition shadow-sm">
-                        Proceed to Secure Payment
-                    </button>
-                </form>
+                }
             </div>
         </div>
     }

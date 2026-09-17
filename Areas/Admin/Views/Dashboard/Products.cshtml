@@ -1,4 +1,4 @@
-﻿@model List<Kayane.ViewModels.ProductModerationVM>
+@model List<Kayane.ViewModels.ProductModerationVM>
 @using Kayane.Models
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
@@ -60,7 +60,7 @@
                                 <td class="px-6 py-4 text-xs font-semibold text-gray-700">@product.BusinessName</td>
                                 <td class="px-6 py-4 text-xs text-gray-500">@product.CategoryName</td>
                                 <td class="px-6 py-4">
-                                    <p class="font-bold text-gray-900">$@product.Price.ToString("F2")</p>
+                                    <p class="font-bold text-gray-900">@product.Price.ToString("C")</p>
                                     <p class="text-xs text-gray-500">Stock: @product.Stock</p>
                                 </td>
                                 <td class="px-6 py-4">

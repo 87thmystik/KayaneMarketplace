@@ -1,0 +1,132 @@
+﻿@model Kayane.ViewModels.RegisterVM
+
+@{
+    ViewData["Title"] = "Create an Account";
+}
+
+<div class="py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto space-y-10">
+
+        <!-- Header -->
+        <div class="text-center space-y-3">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900">Join Kayane</h1>
+            <p class="text-base text-gray-500 max-w-2xl mx-auto">
+                Choose how you'd like to use the marketplace — shop from verified sellers, or open your own storefront.
+            </p>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm font-medium text-center">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm font-medium text-center">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        <!-- Two cards -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- Buyer card -->
+            <div class="bg-white rounded-3xl border-2 border-gray-100 shadow-sm p-8 space-y-6 hover:border-indigo-200 transition">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-2xl">
+                        🛍️
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">I want to shop</h2>
+                        <p class="text-sm text-gray-500">Buy from verified vendors</p>
+                    </div>
+                </div>
+
+                <div asp-validation-summary="ModelOnly" class="text-xs font-semibold text-red-600"></div>
+
+                <form asp-controller="Auth" asp-action="RegisterBuyer" method="post" class="space-y-4">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+                    <div>
+                        <label asp-for="Name" class="block text-xs font-bold text-gray-700 uppercase mb-1">Full Name</label>
+                        <input asp-for="Name" placeholder="Jane Doe" required
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+
+                    <div>
+                        <label asp-for="Email" class="block text-xs font-bold text-gray-700 uppercase mb-1">Email</label>
+                        <input asp-for="Email" type="email" placeholder="you@example.com" required
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        <span asp-validation-for="Email" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+
+                    <div>
+                        <label asp-for="Password" class="block text-xs font-bold text-gray-700 uppercase mb-1">Password</label>
+                        <input asp-for="Password" type="password" placeholder="Minimum 6 characters" required
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        <span asp-validation-for="Password" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+
+                    <div>
+                        <label asp-for="ConfirmPassword" class="block text-xs font-bold text-gray-700 uppercase mb-1">Confirm Password</label>
+                        <input asp-for="ConfirmPassword" type="password" placeholder="Re-enter password" required
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        <span asp-validation-for="ConfirmPassword" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+
+                    <button type="submit"
+                            class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl transition shadow-sm">
+                        Create Buyer Account
+                    </button>
+                </form>
+
+                <div class="text-center text-xs text-gray-500 pt-2">
+                    Already have an account?
+                    <a asp-action="Login" class="text-indigo-600 font-semibold hover:underline">Sign in</a>
+                </div>
+            </div>
+
+            <!-- Vendor card -->
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl shadow-md p-8 flex flex-col gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-emerald-500/20 text-emerald-300 rounded-xl flex items-center justify-center text-2xl">
+                        🏪
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold">I want to sell</h2>
+                        <p class="text-sm text-slate-400">Open a storefront on Kayane</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3 grow">
+                    <p class="text-sm text-slate-300">As a vendor, you'll get:</p>
+                    <ul class="space-y-2 text-sm text-slate-300">
+                        <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span> <span>Your own branded storefront page</span></li>
+                        <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span> <span>Product listing &amp; inventory tools</span></li>
+                        <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span> <span>Order fulfillment dashboard</span></li>
+                        <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span> <span>Automatic payouts to your bank account</span></li>
+                        <li class="flex items-start gap-2"><span class="text-emerald-400">✓</span> <span>Sales analytics</span></li>
+                    </ul>
+                </div>
+
+                <div class="space-y-3">
+                    <a asp-action="RegisterVendor" asp-route-returnUrl="@ViewData["ReturnUrl"]"
+                       class="block w-full text-center py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl transition shadow-lg">
+                        Start Vendor Application →
+                    </a>
+                    <p class="text-xs text-slate-400 text-center">
+                        Vendor accounts are reviewed by an admin before activation.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-center text-xs text-gray-400 pt-4">
+            By creating an account you agree to Kayane's
+            <a asp-controller="Home" asp-action="Privacy" class="text-indigo-600 hover:underline">terms and privacy policy</a>.
+        </p>
+    </div>
+</div>

@@ -2,6 +2,7 @@
 using Kayane.Extensions;
 using Kayane.Filters;
 using Kayane.Models;
+using Kayane.Services;
 using Kayane.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -17,11 +18,19 @@ namespace Kayane.Controllers;
 public class VendorController : Controller
 {
     private readonly KayaneDb _context;
+    private readonly IEmailService _emailService;
+    private readonly IWebHostEnvironment _environment;
 
-    public VendorController(KayaneDb context)
+    public VendorController(
+        KayaneDb context,
+        IEmailService emailService,
+        IWebHostEnvironment environment)
     {
         _context = context;
+        _emailService = emailService;
+        _environment = environment;
     }
+
     // Helper property to retrieve the Vendor injected by [ApprovedVendor] filter
     private Vendor CurrentVendor => HttpContext.GetCurrentVendor();
 
@@ -50,6 +59,52 @@ public class VendorController : Controller
                 Selected = selectedCategoryId.HasValue && c.CategoryId == selectedCategoryId.Value
             })
             .ToListAsync();
+    }
+
+    private async Task<(string? RelativePath, string? ErrorMessage)> ProcessImageUploadAsync(
+        IFormFile? file,
+        string subFolder)
+    {
+        if (file == null || file.Length == 0) return (null, null);
+
+        const long maxBytes = 5 * 1024 * 1024;   // 5 MB
+        if (file.Length > maxBytes)
+            return (null, "Image must be smaller than 5 MB.");
+
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+        if (!allowedExtensions.Contains(extension))
+            return (null, "Only .jpg, .jpeg, .png, and .webp images are allowed.");
+
+        var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", subFolder);
+        Directory.CreateDirectory(uploadsFolder);
+
+        var uniqueFileName = $"{Guid.NewGuid()}{extension}";
+        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+        await using var stream = new FileStream(filePath, FileMode.Create);
+        await file.CopyToAsync(stream);
+
+        return ($"/uploads/{subFolder}/{uniqueFileName}", null);
+    }
+
+    private void DeleteImageIfExists(string? relativePath)
+    {
+        if (string.IsNullOrWhiteSpace(relativePath)) return;
+
+        // Only delete files under /uploads/ to avoid touching seeded/static assets.
+        if (!relativePath.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase)) return;
+
+        var fullPath = Path.Combine(
+            _environment.WebRootPath,
+            relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+
+        if (System.IO.File.Exists(fullPath))
+        {
+            try { System.IO.File.Delete(fullPath); }
+            catch { /* best-effort — don't fail the request */ }
+        }
     }
 
     #endregion
@@ -98,12 +153,19 @@ public class VendorController : Controller
             .Take(5)
             .ToListAsync();
 
+        var pendingOrdersCount = await _context.OrderItems
+            .AsNoTracking()
+            .Where(oi => oi.Product.VendorId == vendorId
+                         && oi.Status == OrderItemStatus.Pending)
+            .CountAsync();
+
         var viewModel = new VendorDashboardVM
         {
             Vendor = vendor,
             Wallet = wallet,
             TotalProducts = vendor.Products?.Count ?? 0,
             PendingProducts = vendor.Products?.Count(p => p.Status == ProductStatus.Pending) ?? 0,
+            PendingOrdersCount = pendingOrdersCount,
             TotalEarnings = wallet.TotalEarned,
             RecentTransactions = recentTransactions
         };
@@ -120,7 +182,7 @@ public class VendorController : Controller
             .AsNoTracking()
             .Where(p => p.VendorId == CurrentVendor.VendorId)
             .OrderByDescending(p => p.CreatedAt)
-            .Select(p => new ViewModels.VendorProductListItemVM
+            .Select(p => new VendorProductListItemVM
             {
                 ProductId = p.ProductId,
                 Name = p.Name,
@@ -160,6 +222,16 @@ public class VendorController : Controller
             return View(model);
         }
 
+        var upload = await ProcessImageUploadAsync(model.ImageFile, "products");
+        var imageUrl = upload.RelativePath;
+        var imageError = upload.ErrorMessage;
+        if (imageError != null)
+        {
+            ModelState.AddModelError("ImageFile", imageError);
+            model.Categories = await GetCategorySelectListAsync(model.CategoryId);
+            return View(model);
+        }
+
         var product = new Product
         {
             ProductId = Guid.NewGuid(),
@@ -169,6 +241,7 @@ public class VendorController : Controller
             Description = model.Description,
             Price = model.Price,
             Stock = model.Stock,
+            ImageUrl = imageUrl,
             Status = ProductStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
@@ -199,6 +272,7 @@ public class VendorController : Controller
             Description = product.Description,
             Price = product.Price,
             Stock = product.Stock,
+            ImageUrl = product.ImageUrl,
             Categories = await GetCategorySelectListAsync(product.CategoryId)
         };
 
@@ -221,6 +295,27 @@ public class VendorController : Controller
             model.Categories = await GetCategorySelectListAsync(model.CategoryId);
             return View(model);
         }
+
+        // If the vendor uploaded a new image, replace the old one.
+        if (model.ImageFile != null && model.ImageFile.Length > 0)
+        {
+            var upload = await ProcessImageUploadAsync(model.ImageFile, "products");
+            var newImageUrl = upload.RelativePath;
+            var imageError = upload.ErrorMessage;
+            if (imageError != null)
+            {
+                ModelState.AddModelError("ImageFile", imageError);
+                model.Categories = await GetCategorySelectListAsync(model.CategoryId);
+                return View(model);
+            }
+
+            if (newImageUrl != null)
+            {
+                DeleteImageIfExists(product.ImageUrl);
+                product.ImageUrl = newImageUrl;
+            }
+        }
+        // No new file: keep product.ImageUrl as-is.
 
         product.Name = model.Name;
         product.CategoryId = model.CategoryId;
@@ -259,13 +354,8 @@ public class VendorController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
-        // Sign out of the authentication cookie
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-        // Clear session if used
         HttpContext.Session.Clear();
-
-        // Redirect to your actual Login action (in AuthController, not VendorAuth)
         return RedirectToAction("Login", "Auth");
     }
 
@@ -335,7 +425,9 @@ public class VendorController : Controller
     {
         var orderItem = await _context.OrderItems
             .Include(oi => oi.Product)
-            .FirstOrDefaultAsync(oi => oi.OrderItemId == orderItemId && oi.Product.VendorId == CurrentVendor.VendorId);
+            .Include(oi => oi.Order)
+            .FirstOrDefaultAsync(oi => oi.OrderItemId == orderItemId
+                                       && oi.Product.VendorId == CurrentVendor.VendorId);
 
         if (orderItem == null)
         {
@@ -343,25 +435,100 @@ public class VendorController : Controller
             return RedirectToAction(nameof(Orders));
         }
 
+        var previousStatus = orderItem.Status;
         orderItem.Status = newStatus;
 
         if (!string.IsNullOrWhiteSpace(shippingCarrier))
-        {
             orderItem.ShippingCarrier = shippingCarrier;
-        }
 
         if (!string.IsNullOrWhiteSpace(trackingNumber))
-        {
             orderItem.TrackingNumber = trackingNumber;
+
+        // Auto-complete the parent order if every item is Delivered.
+        var order = orderItem.Order;
+        if (order != null)
+        {
+            await _context.SaveChangesAsync();
+
+            var allItemStatuses = await _context.OrderItems
+                .Where(oi => oi.OrderId == order.OrderId)
+                .Select(oi => oi.Status)
+                .ToListAsync();
+
+            if (allItemStatuses.All(s => s == OrderItemStatus.Delivered))
+            {
+                order.Status = OrderStatus.Completed;
+                order.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+        }
+        else
+        {
+            await _context.SaveChangesAsync();
         }
 
-        await _context.SaveChangesAsync();
+        // Send customer email on transitions into Shipped or Delivered.
+        if (previousStatus != newStatus &&
+            (newStatus == OrderItemStatus.Shipped || newStatus == OrderItemStatus.Delivered) &&
+            order != null &&
+            !string.IsNullOrWhiteSpace(order.CustomerEmail))
+        {
+            await SendOrderStatusEmailAsync(order, orderItem, newStatus);
+        }
 
         TempData["SuccessMessage"] = $"Order item status updated to '{newStatus}'.";
         return RedirectToAction(nameof(Orders), new { status = newStatus });
     }
 
-   
+    // --- Private helper ---
+    private async Task SendOrderStatusEmailAsync(Order order, OrderItem item, OrderItemStatus newStatus)
+    {
+        var reference = order.OrderId.ToString()[..8].ToUpperInvariant();
+        var productName = item.Product?.Name ?? "Your item";
+
+        string subject;
+        string heading;
+        string body;
+
+        if (newStatus == OrderItemStatus.Shipped)
+        {
+            subject = $"Your order #{reference} has shipped";
+            heading = "Your Order Has Shipped!";
+            body = $@"
+            <p>Good news — <strong>{productName}</strong> from your order
+            <strong>#{reference}</strong> is on its way.</p>
+            <p><strong>Carrier:</strong> {System.Net.WebUtility.HtmlEncode(item.ShippingCarrier ?? "N/A")}<br />
+               <strong>Tracking Number:</strong> {System.Net.WebUtility.HtmlEncode(item.TrackingNumber ?? "N/A")}</p>
+            <p>Thank you for shopping with Kayane.</p>";
+        }
+        else // Delivered
+        {
+            subject = $"Your order #{reference} was delivered";
+            heading = "Your Order Was Delivered";
+            body = $@"
+            <p><strong>{productName}</strong> from your order
+            <strong>#{reference}</strong> has been marked as delivered.</p>
+            <p>We'd love to hear what you think — you can leave a review from the product page.</p>
+            <p>Thank you for shopping with Kayane.</p>";
+        }
+
+        var html = $@"
+        <div style='font-family: Arial, sans-serif; padding: 20px; max-width: 560px;'>
+            <h2 style='color: #4f46e5;'>{heading}</h2>
+            <p>Hello {System.Net.WebUtility.HtmlEncode(order.CustomerName ?? "there")},</p>
+            {body}
+        </div>";
+
+        try
+        {
+            await _emailService.SendEmailAsync(order.CustomerEmail!, subject, html);
+        }
+        catch
+        {
+            // Best-effort: don't fail the request if email fails.
+        }
+    }
+
     // GET: /Vendor/EditProfile
     [HttpGet]
     [ApprovedVendor]
@@ -403,6 +570,6 @@ public class VendorController : Controller
         TempData["SuccessMessage"] = "Profile and bank details updated successfully.";
         return RedirectToAction(nameof(EditProfile));
     }
-    #endregion
 
+    #endregion
 }

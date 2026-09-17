@@ -447,6 +447,14 @@ namespace Kayane.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("ResetTokenExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reset_token_expires_at");
+
+                    b.Property<string>("ResetTokenHash")
+                        .HasColumnType("text")
+                        .HasColumnName("reset_token_hash");
+
                     b.Property<int>("Role")
                         .HasColumnType("integer")
                         .HasColumnName("role");

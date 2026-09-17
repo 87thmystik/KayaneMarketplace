@@ -29,4 +29,9 @@ public class  User
 
     public Vendor? VendorProfile { get; set; }
     public string Phone { get; set; } = string.Empty;
+    [Column("reset_token_hash")]
+    public string? ResetTokenHash { get; set; }
+
+    [Column("reset_token_expires_at")]
+    public DateTime? ResetTokenExpiresAt { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿@model Kayane.ViewModels.StorefrontIndexVM
+@model Kayane.ViewModels.StorefrontIndexVM
 @{
     ViewData["Title"] = "Marketplace Storefront";
 }
@@ -65,7 +65,7 @@
                             </div>
 
                             <div class="pt-4 border-t border-gray-100 flex items-center justify-between">
-                                <div class="text-lg font-extrabold text-emerald-600">&#8358;@p.Price.ToString("N2")</div>
+                                <div class="text-lg font-extrabold text-emerald-600">@p.Price.ToString("C")</div>
                                 <a asp-action="Details" asp-route-id="@p.ProductId" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-sm">
                                     View Details
                                 </a>

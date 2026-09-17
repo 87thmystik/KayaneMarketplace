@@ -1,4 +1,4 @@
-﻿@model Kayane.ViewModels.VendorAnalyticsVM
+@model Kayane.ViewModels.VendorAnalyticsVM
 
 @{
     ViewData["Title"] = "Vendor Analytics Dashboard";
@@ -14,11 +14,11 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-2">
             <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Revenue</span>
-            <div class="text-2xl font-bold text-gray-950">$@Model.TotalRevenue.ToString("F2")</div>
+            <div class="text-2xl font-bold text-gray-950">@Model.TotalRevenue.ToString("C")</div>
         </div>
         <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-2">
             <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">This Month's Revenue</span>
-            <div class="text-2xl font-bold text-emerald-600">$@Model.CurrentMonthRevenue.ToString("F2")</div>
+            <div class="text-2xl font-bold text-emerald-600">@Model.CurrentMonthRevenue.ToString("C")</div>
         </div>
         <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-2">
             <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Fulfilled Orders</span>
@@ -54,7 +54,7 @@
                             <tr class="hover:bg-gray-50/50">
                                 <td class="py-3 px-4 font-semibold text-gray-900">@p.ProductName</td>
                                 <td class="py-3 px-4 text-gray-600">@p.UnitsSold</td>
-                                <td class="py-3 px-4 font-bold text-emerald-600">$@p.RevenueGenerated.ToString("F2")</td>
+                                <td class="py-3 px-4 font-bold text-emerald-600">@p.RevenueGenerated.ToString("C")</td>
                             </tr>
                         }
                     </tbody>

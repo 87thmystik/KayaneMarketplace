@@ -1,16 +1,30 @@
-﻿@model Kayane.ViewModels.VendorDashboardVM
+@model Kayane.ViewModels.VendorDashboardVM
 
 @{
     ViewData["Title"] = "Vendor Dashboard";
 }
 
 <div class="w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Top Action Bar (Logout) -->
+    <div class="flex justify-end">
+        <form asp-controller="Auth" asp-action="Logout" asp-area="" method="post" class="inline">
+            @Html.AntiForgeryToken()
+            <button type="submit"
+                    class="px-4 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-sm font-semibold rounded-xl transition shadow-sm">
+                Logout
+            </button>
+        </form>
+    </div>
+
     <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-extrabold text-gray-900">@Model.Vendor.BusinessName Dashboard</h1>
-            <p class="text-sm text-gray-500 mt-1">Manage your store products, earnings, and withdrawal requests.</p>
-        </div>
+    <div class="border-b border-gray-200 pb-6">
+        <h1 class="text-3xl font-extrabold text-gray-900">@Model.Vendor.BusinessName Dashboard</h1>
+        <p class="text-sm text-gray-500 mt-1">Manage your store products, earnings, and withdrawal requests.</p>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-wrap items-center gap-3">
         <a asp-action="Products"
            class="px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition shadow-sm">
             Manage Products
@@ -31,42 +45,72 @@
 
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="p-4 bg-green-50 border-l-4 border-green-400 text-green-700 rounded-r-lg shadow-sm">
+        <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-sm font-medium">
             @TempData["SuccessMessage"]
         </div>
     }
 
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="p-4 bg-red-50 border-l-4 border-red-400 text-red-700 rounded-r-lg shadow-sm">
+        <div class="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm font-medium">
             @TempData["ErrorMessage"]
         </div>
     }
 
+    @if (Model.PendingOrdersCount > 0)
+    {
+        <div class="p-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl font-medium flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="text-lg">🔔</span>
+                <span class="text-sm">
+                    You have <strong>@Model.PendingOrdersCount</strong>
+                    order item@(Model.PendingOrdersCount == 1 ? "" : "s") awaiting fulfillment.
+                </span>
+            </div>
+            <a asp-action="Orders" asp-route-status="@Kayane.Models.OrderItemStatus.Pending"
+               class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition whitespace-nowrap">
+                View Orders
+            </a>
+        </div>
+    }
+
     <!-- Vendor Stats Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+
         <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Available Wallet Balance</p>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Wallet Balance</p>
             <p class="text-3xl font-extrabold text-gray-900 mt-2">₦@(Model.Wallet?.Balance.ToString("N2") ?? "0.00")</p>
-            <p class="text-xs text-emerald-600 font-semibold mt-1">Ready for payout request</p>
+            <p class="text-xs text-emerald-600 font-semibold mt-1">Ready for payout</p>
         </div>
 
         <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Lifetime Earnings</p>
-            <p class="text-3xl font-extrabold text-gray-900 mt-2">₦@Model.TotalEarnings.ToString("N2")</p>
-            <p class="text-xs text-gray-400 mt-1">Gross earnings processed</p>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Lifetime Earnings</p>
+            <p class="text-3xl font-extrabold text-gray-900 mt-2">@Model.TotalEarnings.ToString("C")</p>
+            <p class="text-xs text-gray-400 mt-1">Gross earnings</p>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+        <a asp-action="Products"
+           class="block bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:border-indigo-400 hover:shadow-md transition">
             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Store Products</p>
             <p class="text-3xl font-extrabold text-gray-900 mt-2">@Model.TotalProducts</p>
-            <p class="text-xs text-amber-600 font-semibold mt-1">@Model.PendingProducts pending moderation</p>
-        </div>
+            <p class="text-xs text-amber-600 font-semibold mt-1">@Model.PendingProducts pending</p>
+            <span class="inline-block mt-3 text-xs font-semibold text-indigo-600">Manage →</span>
+        </a>
+
+        <a asp-action="Orders" asp-route-status="@Kayane.Models.OrderItemStatus.Pending"
+           class="block bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:border-amber-400 hover:shadow-md transition">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pending Orders</p>
+            <p class="text-3xl font-extrabold text-gray-900 mt-2">@Model.PendingOrdersCount</p>
+            <p class="text-xs text-amber-600 font-semibold mt-1">
+                @(Model.PendingOrdersCount == 1 ? "item awaiting" : "items awaiting")
+            </p>
+            <span class="inline-block mt-3 text-xs font-semibold text-amber-600">View orders →</span>
+        </a>
 
         <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
             <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Account Status</p>
-            <p class="text-2xl font-extrabold text-green-600 mt-2">@Model.Vendor.Status</p>
-            <p class="text-xs text-gray-400 mt-1">Active marketplace vendor</p>
+            <p class="text-2xl font-extrabold text-emerald-600 mt-2">@Model.Vendor.Status</p>
+            <p class="text-xs text-gray-400 mt-1">Active vendor</p>
         </div>
     </div>
 
@@ -102,14 +146,14 @@
                                     @tx.CreatedAt.ToLocalTime().ToString("g")
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                                    ₦@tx.Amount.ToString("N2")
+                                    @tx.Amount.ToString("C")
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <span class="px-2.5 py-1 rounded-full text-xs font-semibold
-                                        @(tx.Status == "Approved" ? "bg-green-100 text-green-800" :
-                                          tx.Status == "Rejected" ? "bg-red-100 text-red-800" :
-                                          tx.Status == "Failed" ? "bg-red-100 text-red-800" :
-                                          "bg-yellow-100 text-yellow-800")">
+                                        @(tx.Status == "Approved" ? "bg-emerald-100 text-emerald-800" :
+                                          tx.Status == "Rejected" ? "bg-rose-100 text-rose-800" :
+                                          tx.Status == "Failed" ? "bg-rose-100 text-rose-800" :
+                                          "bg-amber-100 text-amber-800")">
                                         @tx.Status
                                     </span>
                                 </td>

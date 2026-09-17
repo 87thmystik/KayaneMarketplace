@@ -125,7 +125,10 @@ public class PaymentVerificationService
 
         await _context.SaveChangesAsync();
 
-        // Fire confirmation email — best effort, don't fail the transaction if SMTP is down.
+        // Notify each vendor (best effort — logged on failure, never throws).
+        await NotifyVendorsAsync(order);
+
+        // Fire customer confirmation email — best effort.
         try
         {
             await _emailService.SendEmailAsync(
@@ -137,6 +140,60 @@ public class PaymentVerificationService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Confirmation email failed for order {OrderId}", order.OrderId);
+        }
+    }
+
+    private async Task NotifyVendorsAsync(Order order)
+    {
+        var itemsByVendor = order.OrderItems
+            .Where(oi => oi.Product != null)
+            .GroupBy(oi => oi.Product!.VendorId)
+            .ToList();
+
+        var reference = order.OrderId.ToString()[..8].ToUpperInvariant();
+
+        foreach (var group in itemsByVendor)
+        {
+            var vendor = await _context.Vendors
+                .Include(v => v.User)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v => v.VendorId == group.Key);
+
+            if (vendor == null) continue;
+
+            var email = !string.IsNullOrWhiteSpace(vendor.SupportEmail)
+                ? vendor.SupportEmail
+                : vendor.User?.Email;
+
+            if (string.IsNullOrWhiteSpace(email)) continue;
+
+            var itemLines = string.Join("", group.Select(oi =>
+                $"<li>{oi.Quantity} × {System.Net.WebUtility.HtmlEncode(oi.Product!.Name)} — ₦{oi.TotalPrice:N2}</li>"));
+
+            var total = group.Sum(oi => oi.TotalPrice);
+
+            var body = $@"
+            <div style='font-family: Arial, sans-serif; padding: 20px; max-width: 560px;'>
+                <h2 style='color: #4f46e5;'>New Paid Order</h2>
+                <p>Hello <strong>{System.Net.WebUtility.HtmlEncode(vendor.BusinessName)}</strong>,</p>
+                <p>You have a new paid order. Please prepare the item(s) for shipment.</p>
+                <p><strong>Order Reference:</strong> #{reference}</p>
+                <ul>{itemLines}</ul>
+                <p><strong>Your portion:</strong> ₦{total:N2}</p>
+                <p>Log in to your vendor dashboard to view the full order and update shipment status.</p>
+            </div>";
+
+            try
+            {
+                await _emailService.SendEmailAsync(
+                    email,
+                    $"New Order #{reference} — Kayane",
+                    body);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Vendor notification failed for {VendorId}", vendor.VendorId);
+            }
         }
     }
 }
