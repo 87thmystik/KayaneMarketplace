@@ -9,30 +9,27 @@ namespace Kayane.Controllers
     public class WebhooksController : ControllerBase
     {
         private readonly PaymentVerificationService _verifier;
-        private readonly PsbService _psbService;
         private readonly IConfiguration _config;
         private readonly ILogger<WebhooksController> _logger;
 
         public WebhooksController(
             PaymentVerificationService verifier,
-            PsbService psbService,
             IConfiguration config,
             ILogger<WebhooksController> logger)
         {
             _verifier = verifier;
-            _psbService = psbService;
             _config = config;
             _logger = logger;
         }
 
         // POST: /api/webhooks/paystack
-        // Also handles 9PSB if their webhook shape matches Paystack's.
+        // POST: /api/webhooks/9psb
+        // POST: /api/webhooks/payment
         [HttpPost("paystack")]
         [HttpPost("9psb")]
         [HttpPost("payment")]
         public async Task<IActionResult> HandlePaymentWebhook()
         {
-            // Read the raw body once — HMAC must run against the exact bytes.
             Request.EnableBuffering();
             using var reader = new StreamReader(Request.Body, leaveOpen: true);
             var rawBody = await reader.ReadToEndAsync();
@@ -56,7 +53,8 @@ namespace Kayane.Controllers
                 var root = doc.RootElement;
 
                 var eventType = root.TryGetProperty("event", out var ev)
-                    ? ev.GetString() : null;
+                    ? ev.GetString()
+                    : null;
 
                 if (eventType != "charge.success")
                 {
@@ -78,7 +76,6 @@ namespace Kayane.Controllers
                 _logger.LogInformation(
                     "Webhook handled reference {Ref} → {Result}", reference, result);
 
-                // Always 200 so the gateway stops retrying once we've processed it.
                 return Ok();
             }
             catch (Exception ex)

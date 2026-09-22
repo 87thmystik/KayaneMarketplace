@@ -43,6 +43,14 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQWRtaW5Qcm9kdWN0c1xJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Admin/Views/AuditLog/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQXVkaXRMb2dcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Admin/Views/Auth/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQXV0aFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Admin/Views/Dashboard/Approvals.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcRGFzaGJvYXJkXEFwcHJvdmFscy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -63,12 +71,96 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcRGFzaGJvYXJkXFZlbmRvcnMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Admin/Views/Shared/_AdminLayout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcU2hhcmVkXF9BZG1pbkxheW91dC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Admin/Views/_ViewImports.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Admin/Views/_ViewStart.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Vendor/Views/VendorAnalytics/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVmVuZG9yXFZpZXdzXFZlbmRvckFuYWx5dGljc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Vendor/Views/VendorWallet/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVmVuZG9yXFZpZXdzXFZlbmRvcldhbGxldFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Vendor/Views/Vendor/ApplicationStatus.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVmVuZG9yXFZpZXdzXFZlbmRvclxBcHBsaWNhdGlvblN0YXR1cy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Vendor/Views/Vendor/CreateProduct.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVmVuZG9yXFZpZXdzXFZlbmRvclxDcmVhdGVQcm9kdWN0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Vendor/Views/Vendor/Dashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVmVuZG9yXFZpZXdzXFZlbmRvclxEYXNoYm9hcmQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Vendor/Views/Vendor/EditProduct.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVmVuZG9yXFZpZXdzXFZlbmRvclxFZGl0UHJvZHVjdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Vendor/Views/Vendor/EditProfile.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVmVuZG9yXFZpZXdzXFZlbmRvclxFZGl0UHJvZmlsZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Vendor/Views/Vendor/Orders.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVmVuZG9yXFZpZXdzXFZlbmRvclxPcmRlcnMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Vendor/Views/Vendor/Products.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVmVuZG9yXFZpZXdzXFZlbmRvclxQcm9kdWN0cy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Vendor/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVmVuZG9yXFZpZXdzXF9WaWV3SW1wb3J0cy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Areas/Vendor/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVmVuZG9yXFZpZXdzXF9WaWV3U3RhcnQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Account/Addresses.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxBZGRyZXNzZXMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Account/AddressForm.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxBZGRyZXNzRm9ybS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Account/ChangePassword.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxDaGFuZ2VQYXNzd29yZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Account/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Account/Notifications.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxOb3RpZmljYXRpb25zLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Account/Profile.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxQcm9maWxlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Account/Reviews.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxSZXZpZXdzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Account/_AccountNav.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxfQWNjb3VudE5hdi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Auth/AccessDenied.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXV0aFxBY2Nlc3NEZW5pZWQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Auth/ForgotPassword.cshtml]
@@ -157,42 +249,6 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Store/VendorStore.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU3RvcmVcVmVuZG9yU3RvcmUuY3NodG1s
-build_metadata.AdditionalFiles.CssScope = 
-
-[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/VendorAnalytics/Index.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVmVuZG9yQW5hbHl0aWNzXEluZGV4LmNzaHRtbA==
-build_metadata.AdditionalFiles.CssScope = 
-
-[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/VendorWallet/Index.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVmVuZG9yV2FsbGV0XEluZGV4LmNzaHRtbA==
-build_metadata.AdditionalFiles.CssScope = 
-
-[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Vendor/ApplicationStatus.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVmVuZG9yXEFwcGxpY2F0aW9uU3RhdHVzLmNzaHRtbA==
-build_metadata.AdditionalFiles.CssScope = 
-
-[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Vendor/CreateProduct.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVmVuZG9yXENyZWF0ZVByb2R1Y3QuY3NodG1s
-build_metadata.AdditionalFiles.CssScope = 
-
-[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Vendor/Dashboard.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVmVuZG9yXERhc2hib2FyZC5jc2h0bWw=
-build_metadata.AdditionalFiles.CssScope = 
-
-[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Vendor/EditProduct.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVmVuZG9yXEVkaXRQcm9kdWN0LmNzaHRtbA==
-build_metadata.AdditionalFiles.CssScope = 
-
-[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Vendor/EditProfile.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVmVuZG9yXEVkaXRQcm9maWxlLmNzaHRtbA==
-build_metadata.AdditionalFiles.CssScope = 
-
-[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Vendor/Orders.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVmVuZG9yXE9yZGVycy5jc2h0bWw=
-build_metadata.AdditionalFiles.CssScope = 
-
-[C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/Vendor/Products.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVmVuZG9yXFByb2R1Y3RzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/danie/source/repos/KayaneMarketplace/Kayane/Views/_ViewImports.cshtml]

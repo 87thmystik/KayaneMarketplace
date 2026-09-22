@@ -8,21 +8,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Kayane.Areas.Admin.Controllers;
 
-
 [Area("Admin")]
 [Authorize(Roles = "Admin")]
 public class AdminProductsController : Controller
 {
     private readonly KayaneDb _context;
     private readonly IEmailService _emailService;
+    private readonly IAdminAuditService _audit;
 
-    public AdminProductsController(KayaneDb context, IEmailService emailService)
+    public AdminProductsController(
+        KayaneDb context,
+        IEmailService emailService,
+        IAdminAuditService audit)
     {
         _context = context;
         _emailService = emailService;
+        _audit = audit;
     }
 
-    // GET: /AdminProducts
+    // GET: /Admin/AdminProducts
     [HttpGet]
     public async Task<IActionResult> Index(ProductStatus status = ProductStatus.Pending)
     {
@@ -63,7 +67,7 @@ public class AdminProductsController : Controller
         return View(viewModel);
     }
 
-    // POST: /AdminProducts/Approve/{id}
+    // POST: /Admin/AdminProducts/Approve/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Approve(Guid id)
@@ -79,9 +83,16 @@ public class AdminProductsController : Controller
         }
 
         product.Status = ProductStatus.Approved;
+
+        await _audit.LogAsync("product_approved", "Product", product.ProductId, new
+        {
+            productName = product.Name,
+            vendorId = product.VendorId,
+            vendorName = product.Vendor?.BusinessName
+        });
+
         await _context.SaveChangesAsync();
 
-        // Send Approval Email Notification
         if (product.Vendor != null && !string.IsNullOrWhiteSpace(product.Vendor.SupportEmail))
         {
             var subject = $"Product Approved: {product.Name}";
@@ -100,7 +111,7 @@ public class AdminProductsController : Controller
         return RedirectToAction(nameof(Index), new { status = ProductStatus.Pending });
     }
 
-    // POST: /AdminProducts/Reject
+    // POST: /Admin/AdminProducts/Reject
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Reject(Guid productId, string? rejectionReason)
@@ -116,9 +127,17 @@ public class AdminProductsController : Controller
         }
 
         product.Status = ProductStatus.Rejected;
+
+        await _audit.LogAsync("product_rejected", "Product", product.ProductId, new
+        {
+            productName = product.Name,
+            vendorId = product.VendorId,
+            vendorName = product.Vendor?.BusinessName,
+            reason = rejectionReason
+        });
+
         await _context.SaveChangesAsync();
 
-        // Send Rejection Email Notification
         if (product.Vendor != null && !string.IsNullOrWhiteSpace(product.Vendor.SupportEmail))
         {
             var reasonText = !string.IsNullOrWhiteSpace(rejectionReason)
@@ -133,7 +152,7 @@ public class AdminProductsController : Controller
                     <p>Your submission for <strong>{product.Name}</strong> was not approved for listing.</p>
                     <p><strong>Reason for Rejection:</strong></p>
                     <blockquote style='background: #f8f9fa; border-left: 4px solid #dc3545; padding: 10px;'>
-                        {reasonText}
+                        {System.Net.WebUtility.HtmlEncode(reasonText)}
                     </blockquote>
                     <p>You can update the details from your Vendor Dashboard and resubmit for review.</p>
                 </div>";

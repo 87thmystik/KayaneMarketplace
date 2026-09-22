@@ -27,8 +27,9 @@ public class CheckoutController : Controller
         _verifier = verifier;
     }
 
+    // GET: /Checkout
     [HttpGet]
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
         var cartItems = HttpContext.Session.Get<List<CartItemVM>>("Cart") ?? new List<CartItemVM>();
         if (!cartItems.Any())
@@ -37,16 +38,33 @@ public class CheckoutController : Controller
             return RedirectToAction("Index", "Cart");
         }
 
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Guid.TryParse(userIdClaim, out var userId);
+
+        var savedAddresses = await _context.BuyerAddresses
+            .AsNoTracking()
+            .Where(a => a.UserId == userId)
+            .OrderByDescending(a => a.IsDefault)
+            .ThenByDescending(a => a.CreatedAt)
+            .ToListAsync();
+
+        var defaultAddress = savedAddresses.FirstOrDefault(a => a.IsDefault);
+
         var viewModel = new CheckoutVM
         {
-            CustomerName = User.FindFirstValue(ClaimTypes.Name) ?? string.Empty,
+            CustomerName = defaultAddress?.RecipientName ?? User.FindFirstValue(ClaimTypes.Name) ?? string.Empty,
             CustomerEmail = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty,
-            Cart = new CartVM { Items = cartItems }
+            CustomerPhone = defaultAddress?.Phone ?? string.Empty,
+            ShippingAddress = defaultAddress?.FullAddress ?? string.Empty,
+            Cart = new CartVM { Items = cartItems },
+            SavedAddresses = savedAddresses,
+            SelectedAddressId = defaultAddress?.AddressId
         };
 
         return View(viewModel);
     }
 
+    // POST: /Checkout/Process
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Process(CheckoutVM model)
@@ -58,26 +76,77 @@ public class CheckoutController : Controller
             return RedirectToAction("Index", "Cart");
         }
 
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdClaim, out var userId))
+        {
+            TempData["ErrorMessage"] = "Session expired. Please sign in again.";
+            return RedirectToAction("Index", "Cart");
+        }
+
+        // Reload saved addresses so the view can redisplay on validation failure
+        var savedAddresses = await _context.BuyerAddresses
+            .AsNoTracking()
+            .Where(a => a.UserId == userId)
+            .OrderByDescending(a => a.IsDefault)
+            .ThenByDescending(a => a.CreatedAt)
+            .ToListAsync();
+
         model.Cart = new CartVM { Items = cartItems };
+        model.SavedAddresses = savedAddresses;
+
+        // Resolve the final shipping details
+        string finalName;
+        string finalPhone;
+        string finalAddress;
+
+        if (model.SelectedAddressId.HasValue)
+        {
+            var selected = savedAddresses.FirstOrDefault(a => a.AddressId == model.SelectedAddressId.Value);
+            if (selected == null)
+            {
+                ModelState.AddModelError(string.Empty, "The selected address could not be found.");
+                return View("Index", model);
+            }
+
+            finalName = selected.RecipientName;
+            finalPhone = selected.Phone;
+            finalAddress = selected.FullAddress;
+
+            // Clear manual field requirements — saved address supersedes them
+            ModelState.Remove(nameof(model.CustomerName));
+            ModelState.Remove(nameof(model.CustomerPhone));
+            ModelState.Remove(nameof(model.ShippingAddress));
+        }
+        else
+        {
+            // Using a manually-entered address — validate required fields
+            if (string.IsNullOrWhiteSpace(model.CustomerName))
+                ModelState.AddModelError(nameof(model.CustomerName), "Full name is required.");
+            if (string.IsNullOrWhiteSpace(model.CustomerPhone))
+                ModelState.AddModelError(nameof(model.CustomerPhone), "Phone number is required.");
+            if (string.IsNullOrWhiteSpace(model.ShippingAddress))
+                ModelState.AddModelError(nameof(model.ShippingAddress), "Shipping address is required.");
+
+            finalName = model.CustomerName;
+            finalPhone = model.CustomerPhone;
+            finalAddress = model.ShippingAddress;
+        }
 
         if (!ModelState.IsValid)
         {
             return View("Index", model);
         }
 
-        // Cash on delivery: skip the gateway entirely.
+        // Cash on Delivery path — skip the gateway entirely
         if (model.SelectedPaymentMethod == PaymentMethod.CashOnDelivery)
         {
-            return await ProcessCashOnDeliveryAsync(model, cartItems);
+            return await ProcessCashOnDeliveryAsync(
+                model, cartItems, userId, finalName, finalPhone, finalAddress);
         }
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            var userId = Guid.TryParse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier), out var parsedId)
-                ? parsedId : Guid.Empty;
-
             decimal totalAmount = cartItems.Sum(i => i.Price * i.Quantity);
             var reference = $"KAY-{Guid.NewGuid():N}".ToUpperInvariant();
 
@@ -85,10 +154,10 @@ public class CheckoutController : Controller
             {
                 OrderId = Guid.NewGuid(),
                 UserId = userId,
-                CustomerName = model.CustomerName,
+                CustomerName = finalName,
                 CustomerEmail = model.CustomerEmail,
-                CustomerPhone = model.CustomerPhone,
-                ShippingAddress = model.ShippingAddress,
+                CustomerPhone = finalPhone,
+                ShippingAddress = finalAddress,
                 TotalAmount = totalAmount,
                 Status = OrderStatus.Pending,
                 PaymentMethod = model.SelectedPaymentMethod,
@@ -101,9 +170,7 @@ public class CheckoutController : Controller
             {
                 var product = await _context.Products.FindAsync(item.ProductId);
                 if (product == null || product.Stock < item.Quantity)
-                {
                     throw new Exception($"Product '{item.ProductName}' is out of stock.");
-                }
 
                 product.Stock -= item.Quantity;
 
@@ -119,7 +186,25 @@ public class CheckoutController : Controller
                 });
             }
 
-            // Create the Payment record BEFORE calling the gateway.
+            // Save the new address if the buyer opted in
+            if (!model.SelectedAddressId.HasValue && model.SaveNewAddress)
+            {
+                var newAddress = new BuyerAddress
+                {
+                    AddressId = Guid.NewGuid(),
+                    UserId = userId,
+                    Label = "Home",
+                    RecipientName = finalName,
+                    Phone = finalPhone,
+                    AddressLine1 = finalAddress,
+                    City = "",
+                    State = "",
+                    IsDefault = !await _context.BuyerAddresses.AnyAsync(a => a.UserId == userId),
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.BuyerAddresses.Add(newAddress);
+            }
+
             _context.Payments.Add(new Payment
             {
                 PaymentId = Guid.NewGuid(),
@@ -139,19 +224,14 @@ public class CheckoutController : Controller
                 Request.Scheme)!;
 
             var paymentResponse = await _psbService.InitializeTransactionAsync(
-                reference,
-                order.TotalAmount,
-                order.CustomerEmail ?? string.Empty,
-                callbackUrl);
+                reference, order.TotalAmount, order.CustomerEmail ?? "", callbackUrl);
 
             if (!paymentResponse.Success)
-            {
                 throw new Exception(paymentResponse.Message ?? "Failed to initialize payment gateway.");
-            }
 
             await transaction.CommitAsync();
 
-            // Cart clears in Verify when payment actually succeeds.
+            // Cart clears in Verify when payment actually succeeds
             return Redirect(paymentResponse.RedirectUrl!);
         }
         catch (Exception ex)
@@ -162,22 +242,24 @@ public class CheckoutController : Controller
         }
     }
 
-    private async Task<IActionResult> ProcessCashOnDeliveryAsync(CheckoutVM model, List<CartItemVM> cartItems)
+    private async Task<IActionResult> ProcessCashOnDeliveryAsync(
+        CheckoutVM model,
+        List<CartItemVM> cartItems,
+        Guid userId,
+        string finalName,
+        string finalPhone,
+        string finalAddress)
     {
-        var userId = Guid.TryParse(
-            User.FindFirstValue(ClaimTypes.NameIdentifier), out var parsedId)
-            ? parsedId : Guid.Empty;
-
         decimal totalAmount = cartItems.Sum(i => i.Price * i.Quantity);
 
         var order = new Order
         {
             OrderId = Guid.NewGuid(),
             UserId = userId,
-            CustomerName = model.CustomerName,
+            CustomerName = finalName,
             CustomerEmail = model.CustomerEmail,
-            CustomerPhone = model.CustomerPhone,
-            ShippingAddress = model.ShippingAddress,
+            CustomerPhone = finalPhone,
+            ShippingAddress = finalAddress,
             TotalAmount = totalAmount,
             Status = OrderStatus.Pending,
             PaymentMethod = PaymentMethod.CashOnDelivery,
@@ -209,13 +291,31 @@ public class CheckoutController : Controller
             });
         }
 
+        if (!model.SelectedAddressId.HasValue && model.SaveNewAddress)
+        {
+            var newAddress = new BuyerAddress
+            {
+                AddressId = Guid.NewGuid(),
+                UserId = userId,
+                Label = "Home",
+                RecipientName = finalName,
+                Phone = finalPhone,
+                AddressLine1 = finalAddress,
+                City = "",
+                State = "",
+                IsDefault = !await _context.BuyerAddresses.AnyAsync(a => a.UserId == userId),
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.BuyerAddresses.Add(newAddress);
+        }
+
         await _context.SaveChangesAsync();
         HttpContext.Session.Remove("Cart");
 
         return RedirectToAction("Confirmation", new { id = order.OrderId });
     }
 
-    // Gateway redirects here after the user completes (or abandons) payment.
+    // GET: /Checkout/Verify
     [HttpGet]
     public async Task<IActionResult> Verify(string reference)
     {
@@ -251,6 +351,7 @@ public class CheckoutController : Controller
         }
     }
 
+    // GET: /Checkout/Confirmation/{id}
     [HttpGet]
     public async Task<IActionResult> Confirmation(Guid id)
     {

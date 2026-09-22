@@ -13,15 +13,18 @@ public class AdminPayoutsController : Controller
 {
     private readonly KayaneDb _context;
     private readonly PsbService _psbService;
+    private readonly IAdminAuditService _audit;
     private readonly ILogger<AdminPayoutsController> _logger;
 
     public AdminPayoutsController(
         KayaneDb context,
         PsbService psbService,
+        IAdminAuditService audit,
         ILogger<AdminPayoutsController> logger)
     {
         _context = context;
         _psbService = psbService;
+        _audit = audit;
         _logger = logger;
     }
 
@@ -59,8 +62,6 @@ public class AdminPayoutsController : Controller
 
         if (actionType.Equals("Approve", StringComparison.OrdinalIgnoreCase))
         {
-            // Attempt 9PSB transfer. Amount was already deducted from the wallet
-            // when the vendor submitted the request (see VendorController.RequestPayout).
             if (vendor == null ||
                 string.IsNullOrWhiteSpace(vendor.AccountNumber) ||
                 string.IsNullOrWhiteSpace(vendor.BankCode))
@@ -86,7 +87,6 @@ public class AdminPayoutsController : Controller
                     "9PSB transfer failed for payout {PayoutId}, vendor {VendorId}, amount {Amount}",
                     payout.PayoutId, vendor.VendorId, payout.Amount);
 
-                // Refund the held balance — vendor didn't receive the money.
                 var wallet = await _context.VendorWallets
                     .FirstOrDefaultAsync(w => w.VendorId == vendor.VendorId);
                 if (wallet != null)
@@ -95,6 +95,14 @@ public class AdminPayoutsController : Controller
                     wallet.UpdatedAt = DateTime.UtcNow;
                 }
 
+                await _audit.LogAsync("payout_failed", "Payout", payout.PayoutId, new
+                {
+                    vendorId = vendor.VendorId,
+                    vendorName = vendor.BusinessName,
+                    amount = payout.Amount,
+                    reason = "9PSB transfer failed"
+                });
+
                 await _context.SaveChangesAsync();
                 TempData["ErrorMessage"] =
                     $"9PSB transfer failed for {vendor.BusinessName}. Funds refunded to wallet.";
@@ -102,6 +110,15 @@ public class AdminPayoutsController : Controller
             }
 
             payout.Status = "Approved";
+
+            await _audit.LogAsync("payout_approved", "Payout", payout.PayoutId, new
+            {
+                vendorId = vendor.VendorId,
+                vendorName = vendor.BusinessName,
+                amount = payout.Amount,
+                reference
+            });
+
             await _context.SaveChangesAsync();
             TempData["SuccessMessage"] =
                 $"Payout of ₦{payout.Amount:N2} for {vendor.BusinessName} approved and transferred.";
@@ -110,7 +127,6 @@ public class AdminPayoutsController : Controller
         {
             payout.Status = "Rejected";
 
-            // Refund the held balance.
             var wallet = await _context.VendorWallets
                 .FirstOrDefaultAsync(w => w.VendorId == payout.VendorId);
             if (wallet != null)
@@ -118,6 +134,13 @@ public class AdminPayoutsController : Controller
                 wallet.Balance += payout.Amount;
                 wallet.UpdatedAt = DateTime.UtcNow;
             }
+
+            await _audit.LogAsync("payout_rejected", "Payout", payout.PayoutId, new
+            {
+                vendorId = payout.VendorId,
+                vendorName = vendor?.BusinessName,
+                amount = payout.Amount
+            });
 
             await _context.SaveChangesAsync();
             TempData["ErrorMessage"] =

@@ -8,18 +8,9 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-200 pb-6">
-        <div>
-            <h1 class="text-3xl font-extrabold text-gray-900">Order Fulfillment</h1>
-            <p class="text-sm text-gray-500 mt-1">Track and fulfill customer orders.</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <a asp-action="Dashboard"
-               class="text-xs font-semibold text-gray-500 hover:text-gray-800">← Dashboard</a>
-            <span class="text-gray-300">/</span>
-            <a asp-action="Products"
-               class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">Products</a>
-        </div>
+    <div class="border-b border-gray-200 pb-6">
+        <h1 class="text-3xl font-extrabold text-gray-900">Order Fulfillment</h1>
+        <p class="text-sm text-gray-500 mt-1">Track and fulfill customer orders.</p>
     </div>
 
     @if (TempData["SuccessMessage"] != null)
@@ -153,7 +144,6 @@
                                     }
                                     else if (item.Status == OrderItemStatus.Processing)
                                     {
-                                        <!-- Alpine modal trigger -->
                                         <button type="button"
                                             @@click="$dispatch('open-ship-modal', { id: '@item.OrderItemId', product: @System.Text.Json.JsonSerializer.Serialize(item.ProductName) })"
                                                 class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition shadow-sm whitespace-nowrap">
@@ -195,7 +185,6 @@
      x-cloak
      class="fixed inset-0 z-50 flex items-center justify-center p-4">
 
-    <!-- Backdrop -->
     <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
     @@click="open = false"
          x-show="open"
@@ -203,7 +192,6 @@
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"></div>
 
-    <!-- Modal content -->
     <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-5"
          x-show="open"
          x-transition:enter="transition ease-out duration-200"

@@ -1,0 +1,28 @@
+﻿@{
+    var current = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
+
+    string NavClass(string action) =>
+        string.Equals(current, action, StringComparison.OrdinalIgnoreCase)
+            ? "block px-3 py-2 rounded-lg text-sm font-semibold bg-indigo-50 text-indigo-700"
+            : "block px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition";
+}
+
+<aside class="lg:col-span-1 space-y-4">
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500">My Account</h2>
+        </div>
+        <nav class="p-2 space-y-1">
+            <a asp-action="Index" class="@NavClass("Index")">Overview</a>
+            <a asp-action="Profile" class="@NavClass("Profile")">Profile</a>
+            <a asp-action="ChangePassword" class="@NavClass("ChangePassword")">Change Password</a>
+            <a asp-action="Addresses" class="@NavClass("Addresses")">Saved Addresses</a>
+            <a asp-controller="CustomerOrders" asp-action="Index"
+               class="block px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition">
+                My Orders
+            </a>
+            <a asp-action="Reviews" class="@NavClass("Reviews")">My Reviews</a>
+            <a asp-action="Notifications" class="@NavClass("Notifications")">Notifications</a>
+        </nav>
+    </div>
+</aside>

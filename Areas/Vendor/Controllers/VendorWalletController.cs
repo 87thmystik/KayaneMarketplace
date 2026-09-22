@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Kayane.Controllers;
+namespace Kayane.Areas.VendorPanel.Controllers;
 
+[Area("Vendor")]
 [Authorize]
 [ApprovedVendor]
 public class VendorWalletController : Controller
@@ -19,7 +20,6 @@ public class VendorWalletController : Controller
         _context = context;
     }
 
-    // GET: /VendorWallet
     [HttpGet]
     public async Task<IActionResult> Index()
     {
@@ -66,7 +66,6 @@ public class VendorWalletController : Controller
         return View(viewModel);
     }
 
-    // POST: /VendorWallet/RequestPayout
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RequestPayout(RequestPayoutInputModel model)
@@ -97,7 +96,6 @@ public class VendorWalletController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        // Deduct and hold until admin approves or rejects.
         wallet.Balance -= model.Amount;
         wallet.UpdatedAt = DateTime.UtcNow;
 

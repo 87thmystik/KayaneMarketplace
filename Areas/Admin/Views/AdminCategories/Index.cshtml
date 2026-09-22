@@ -1,20 +1,15 @@
-﻿
+﻿@using Kayane.ViewModels
+@model List<CategoryListItemVM>
 
 @{
     ViewData["Title"] = "Manage Categories";
-    var categories = ViewData["Categories"] as System.Collections.IEnumerable;
 }
 
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
-        <div>
-            <h1 class="text-3xl font-extrabold text-gray-900">Manage Categories</h1>
-            <p class="text-sm text-gray-500 mt-1">Create categories so vendors can organize products.</p>
-        </div>
-        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
-            ← Back to Admin Dashboard
-        </a>
+    <div class="border-b border-gray-200 pb-6">
+        <h1 class="text-3xl font-extrabold text-gray-900">Manage Categories</h1>
+        <p class="text-sm text-gray-500 mt-1">Create categories so vendors can organize products.</p>
     </div>
 
     @if (TempData["SuccessMessage"] != null)
@@ -51,11 +46,7 @@
             <h2 class="text-lg font-bold text-gray-900">Existing Categories</h2>
         </div>
 
-        @{
-            var list = ViewData["Categories"] as System.Collections.Generic.IEnumerable<dynamic>;
-        }
-
-        @if (list == null || !list.Any())
+        @if (!Model.Any())
         {
             <div class="p-12 text-center text-gray-500 text-sm">
                 No categories yet. Create one above.
@@ -73,7 +64,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 text-sm">
-                    @foreach (var c in list)
+                    @foreach (var c in Model)
                     {
                         <tr class="hover:bg-gray-50/80 transition">
                             <td class="px-6 py-4 font-bold text-gray-900">@c.Name</td>

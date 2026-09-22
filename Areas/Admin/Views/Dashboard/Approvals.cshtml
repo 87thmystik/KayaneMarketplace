@@ -6,15 +6,6 @@
 }
 
 <div class="w-full px-4 sm:px-6 lg:px-8 py-6">
-    <!-- Back Button -->
-    <div class="mb-4">
-        <a asp-action="Dashboard" style="cursor: pointer;" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition shadow-sm cursor-pointer">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-            Back to Dashboard
-        </a>
-    </div>
 
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-900">Vendor Payout Requests</h1>
@@ -86,22 +77,20 @@
                                     @if (tx.Status == "Pending")
                                     {
                                         <div class="flex items-center justify-end gap-2 w-full">
-                                            <!-- Approve Form -->
                                             <form asp-action="ProcessPayout" method="post" class="inline-block m-0">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="payoutId" value="@tx.PayoutId" />
                                                 <input type="hidden" name="actionType" value="Approve" />
-                                                <button type="submit" style="background-color: #16a34a; color: white; cursor: pointer;" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-xs font-bold transition shadow-sm inline-block cursor-pointer">
+                                                <button type="submit" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-xs font-bold transition shadow-sm inline-block">
                                                     Approve
                                                 </button>
                                             </form>
 
-                                            <!-- Reject Form -->
                                             <form asp-action="ProcessPayout" method="post" class="inline-block m-0">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="payoutId" value="@tx.PayoutId" />
                                                 <input type="hidden" name="actionType" value="Reject" />
-                                                <button type="submit" style="background-color: #dc2626; color: white; cursor: pointer;" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-bold transition shadow-sm inline-block cursor-pointer">
+                                                <button type="submit" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-bold transition shadow-sm inline-block">
                                                     Reject
                                                 </button>
                                             </form>

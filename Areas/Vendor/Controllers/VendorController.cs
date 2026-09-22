@@ -12,23 +12,27 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
-namespace Kayane.Controllers;
+namespace Kayane.Areas.VendorPanel.Controllers;
 
+[Area("Vendor")]
 [Authorize]
 public class VendorController : Controller
 {
     private readonly KayaneDb _context;
     private readonly IEmailService _emailService;
     private readonly IWebHostEnvironment _environment;
+    private readonly INotificationService _notifications;
 
     public VendorController(
         KayaneDb context,
         IEmailService emailService,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        INotificationService notifications)
     {
         _context = context;
         _emailService = emailService;
         _environment = environment;
+        _notifications = notifications;
     }
 
     // Helper property to retrieve the Vendor injected by [ApprovedVendor] filter
@@ -444,8 +448,9 @@ public class VendorController : Controller
         if (!string.IsNullOrWhiteSpace(trackingNumber))
             orderItem.TrackingNumber = trackingNumber;
 
-        // Auto-complete the parent order if every item is Delivered.
         var order = orderItem.Order;
+
+        // Auto-complete the parent order if every item is Delivered.
         if (order != null)
         {
             await _context.SaveChangesAsync();
@@ -455,26 +460,48 @@ public class VendorController : Controller
                 .Select(oi => oi.Status)
                 .ToListAsync();
 
-            if (allItemStatuses.All(s => s == OrderItemStatus.Delivered))
+            if (allItemStatuses.All(s => s == OrderItemStatus.Delivered) &&
+                order.Status != OrderStatus.Completed)
             {
                 order.Status = OrderStatus.Completed;
                 order.UpdatedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
             }
         }
-        else
-        {
-            await _context.SaveChangesAsync();
-        }
 
-        // Send customer email on transitions into Shipped or Delivered.
+        // On transitions into Shipped or Delivered: queue notification + send email.
         if (previousStatus != newStatus &&
             (newStatus == OrderItemStatus.Shipped || newStatus == OrderItemStatus.Delivered) &&
-            order != null &&
-            !string.IsNullOrWhiteSpace(order.CustomerEmail))
+            order != null)
         {
-            await SendOrderStatusEmailAsync(order, orderItem, newStatus);
+            var reference = order.OrderId.ToString()[..8].ToUpperInvariant();
+
+            if (newStatus == OrderItemStatus.Shipped)
+            {
+                await _notifications.NotifyAsync(
+                    order.UserId,
+                    "Order shipped",
+                    $"Your order #{reference} is on the way. " +
+                    $"Carrier: {orderItem.ShippingCarrier ?? "N/A"}. " +
+                    $"Tracking: {orderItem.TrackingNumber ?? "N/A"}.",
+                    NotificationType.OrderUpdate);
+            }
+            else
+            {
+                await _notifications.NotifyAsync(
+                    order.UserId,
+                    "Order delivered",
+                    $"Your order #{reference} has been delivered. We'd love to hear what you think!",
+                    NotificationType.OrderUpdate);
+            }
+
+            if (!string.IsNullOrWhiteSpace(order.CustomerEmail))
+            {
+                await SendOrderStatusEmailAsync(order, orderItem, newStatus);
+            }
         }
+
+        // Single save — persists item change, order completion, and any queued notification.
+        await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = $"Order item status updated to '{newStatus}'.";
         return RedirectToAction(nameof(Orders), new { status = newStatus });

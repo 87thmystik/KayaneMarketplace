@@ -38,7 +38,7 @@ namespace Kayane.Controllers
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                return LocalRedirect(returnUrl ?? Url.Action("Dashboard", "Vendor") ?? "~/");
+                return LocalRedirect(returnUrl ?? Url.Action("Dashboard", "Vendor", new { area = "Vendor" }) ?? "~/");
             }
             ViewData["ReturnUrl"] = returnUrl;
             return View(new RegisterVendorVM());
@@ -49,7 +49,7 @@ namespace Kayane.Controllers
         [EnableRateLimiting("register")]
         public async Task<IActionResult> RegisterVendor(RegisterVendorVM model, string? returnUrl = null)
         {
-            returnUrl ??= Url.Action("Dashboard", "Vendor");
+            returnUrl ??= Url.Action("ApplicationStatus", "Vendor", new { area = "Vendor" });
 
             if (!ModelState.IsValid)
             {
@@ -116,7 +116,6 @@ namespace Kayane.Controllers
 
         // ===================== BUYER REGISTRATION =====================
 
-        // GET: /Auth/Register
         [HttpGet]
         public IActionResult Register(string? returnUrl = null)
         {
@@ -128,7 +127,6 @@ namespace Kayane.Controllers
             return View(new RegisterVM());
         }
 
-        // POST: /Auth/RegisterBuyer
         [HttpPost]
         [ValidateAntiForgeryToken]
         [EnableRateLimiting("register")]
@@ -203,7 +201,9 @@ namespace Kayane.Controllers
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
 
-            if (user == null)
+            // Reject admin accounts here — they must use the separate admin portal.
+            // Same generic message so we don't reveal that an admin portal exists.
+            if (user == null || user.Role == UserRole.Admin)
             {
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                 ViewData["ReturnUrl"] = returnUrl;
@@ -256,10 +256,16 @@ namespace Kayane.Controllers
 
             if (user.Role == UserRole.Vendor)
             {
-                return RedirectToAction("Dashboard", "Vendor");
+                return RedirectToAction("Dashboard", "Vendor", new { area = "Vendor" });
             }
 
             return RedirectToAction("Index", "Home");
+        }
+        // Access Denied page for unauthorized access attempts
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
         }
 
         [HttpPost]
@@ -291,14 +297,11 @@ namespace Kayane.Controllers
             var normalizedEmail = model.Email.Trim().ToLowerInvariant();
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
 
-            // Always show the same message, regardless of whether the account exists.
-            // Otherwise attackers can enumerate accounts.
             TempData["SuccessMessage"] =
                 "If an account with that email exists, a reset link has been sent.";
 
             if (user == null) return RedirectToAction(nameof(Login));
 
-            // Generate a random token, store only the hash.
             var token = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32))
                 .Replace("+", "-").Replace("/", "_").TrimEnd('=');
             var tokenHash = ComputeSha256Hash(token);
@@ -378,7 +381,6 @@ namespace Kayane.Controllers
             var passwordHasher = new Microsoft.AspNetCore.Identity.PasswordHasher<User>();
             user.PasswordHash = passwordHasher.HashPassword(user, model.NewPassword);
 
-            // Invalidate the token — one-time use only.
             user.ResetTokenHash = null;
             user.ResetTokenExpiresAt = null;
 
@@ -390,7 +392,6 @@ namespace Kayane.Controllers
             return RedirectToAction(nameof(Login));
         }
 
-        // Helper
         private static string ComputeSha256Hash(string input)
         {
             var bytes = System.Text.Encoding.UTF8.GetBytes(input);

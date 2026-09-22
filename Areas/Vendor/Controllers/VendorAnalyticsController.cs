@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Kayane.Controllers;
+namespace Kayane.Areas.VendorPanel.Controllers;
 
+[Area("Vendor")]
 [Authorize]
 [ApprovedVendor]
 public class VendorAnalyticsController : Controller

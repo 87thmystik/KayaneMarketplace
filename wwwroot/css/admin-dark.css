@@ -1,0 +1,234 @@
+﻿/* =====================================================================
+   Admin Dark Mode overrides
+   Scoped to .admin-dark container — only affects admin pages.
+   Loaded AFTER site.css so these rules win.
+   ===================================================================== */
+
+/* Backgrounds */
+.admin-dark .bg-white {
+    background-color: #1e293b !important;
+}
+/* slate-800 */
+.admin-dark .bg-gray-50 {
+    background-color: #0f172a !important;
+}
+/* slate-900 */
+.admin-dark .bg-gray-100 {
+    background-color: #1e293b !important;
+}
+/* slate-800 */
+.admin-dark .bg-gray-200 {
+    background-color: #334155 !important;
+}
+/* slate-700 */
+.admin-dark .bg-gray-900\/60 {
+    background-color: rgba(0,0,0,0.7) !important;
+}
+
+/* Borders */
+.admin-dark .border-gray-100 {
+    border-color: #334155 !important;
+}
+/* slate-700 */
+.admin-dark .border-gray-200 {
+    border-color: #334155 !important;
+}
+
+.admin-dark .border-gray-300 {
+    border-color: #475569 !important;
+}
+/* slate-600 */
+.admin-dark .divide-gray-100 > * + * {
+    border-color: #334155 !important;
+}
+
+.admin-dark .divide-gray-200 > * + * {
+    border-color: #334155 !important;
+}
+
+/* Text */
+.admin-dark .text-gray-950 {
+    color: #f8fafc !important;
+}
+/* slate-50 */
+.admin-dark .text-gray-900 {
+    color: #f1f5f9 !important;
+}
+/* slate-100 */
+.admin-dark .text-gray-800 {
+    color: #e2e8f0 !important;
+}
+/* slate-200 */
+.admin-dark .text-gray-700 {
+    color: #cbd5e1 !important;
+}
+/* slate-300 */
+.admin-dark .text-gray-600 {
+    color: #94a3b8 !important;
+}
+/* slate-400 */
+.admin-dark .text-gray-500 {
+    color: #94a3b8 !important;
+}
+
+.admin-dark .text-gray-400 {
+    color: #64748b !important;
+}
+/* slate-500 */
+.admin-dark .text-gray-300 {
+    color: #475569 !important;
+}
+/* slate-600 */
+
+/* Inputs — form fields on the dark background */
+.admin-dark input[type="text"],
+.admin-dark input[type="email"],
+.admin-dark input[type="number"],
+.admin-dark input[type="password"],
+.admin-dark input[type="search"],
+.admin-dark select,
+.admin-dark textarea {
+    background-color: #0f172a !important;
+    color: #f1f5f9 !important;
+    border-color: #475569 !important;
+}
+
+    .admin-dark input::placeholder,
+    .admin-dark textarea::placeholder {
+        color: #64748b !important;
+    }
+
+    .admin-dark select option {
+        background-color: #0f172a;
+        color: #f1f5f9;
+    }
+
+/* Subtle hover states */
+.admin-dark .hover\:bg-gray-50\/80:hover {
+    background-color: #334155 !important;
+}
+
+.admin-dark .hover\:bg-gray-50:hover {
+    background-color: #334155 !important;
+}
+
+.admin-dark .hover\:bg-gray-100:hover {
+    background-color: #334155 !important;
+}
+
+.admin-dark .hover\:bg-gray-200:hover {
+    background-color: #475569 !important;
+}
+
+/* Status badges — soften the light backgrounds so they don't glare */
+.admin-dark .bg-emerald-50 {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+}
+
+.admin-dark .bg-emerald-100 {
+    background-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+.admin-dark .text-emerald-800 {
+    color: #6ee7b7 !important;
+}
+
+.admin-dark .text-emerald-700 {
+    color: #6ee7b7 !important;
+}
+
+.admin-dark .text-emerald-600 {
+    color: #34d399 !important;
+}
+
+.admin-dark .bg-rose-50 {
+    background-color: rgba(244, 63, 94, 0.15) !important;
+}
+
+.admin-dark .bg-rose-100 {
+    background-color: rgba(244, 63, 94, 0.2) !important;
+}
+
+.admin-dark .text-rose-800 {
+    color: #fda4af !important;
+}
+
+.admin-dark .text-rose-700 {
+    color: #fda4af !important;
+}
+
+.admin-dark .text-rose-600 {
+    color: #fb7185 !important;
+}
+
+.admin-dark .bg-amber-50 {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+.admin-dark .bg-amber-100 {
+    background-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+.admin-dark .text-amber-800 {
+    color: #fcd34d !important;
+}
+
+.admin-dark .text-amber-700 {
+    color: #fcd34d !important;
+}
+
+.admin-dark .text-amber-600 {
+    color: #fbbf24 !important;
+}
+
+.admin-dark .bg-sky-100 {
+    background-color: rgba(14, 165, 233, 0.2) !important;
+}
+
+.admin-dark .text-sky-800 {
+    color: #7dd3fc !important;
+}
+
+.admin-dark .text-sky-700 {
+    color: #7dd3fc !important;
+}
+
+.admin-dark .bg-indigo-100 {
+    background-color: rgba(99, 102, 241, 0.2) !important;
+}
+
+.admin-dark .text-indigo-800 {
+    color: #a5b4fc !important;
+}
+
+.admin-dark .text-indigo-700 {
+    color: #a5b4fc !important;
+}
+
+.admin-dark .text-indigo-600 {
+    color: #818cf8 !important;
+}
+
+.admin-dark .bg-blue-100 {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+.admin-dark .text-blue-800 {
+    color: #93c5fd !important;
+}
+
+/* Reject-modal details block — always was a light gray */
+.admin-dark pre {
+    background-color: #0f172a !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+
+/* Any leftover ring/tab backgrounds */
+.admin-dark .bg-slate-700 {
+    background-color: #334155 !important;
+}
+
+.admin-dark .hover\:bg-slate-800:hover {
+    background-color: #1e293b !important;
+}

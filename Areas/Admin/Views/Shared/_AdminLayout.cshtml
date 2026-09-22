@@ -1,0 +1,143 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Kayane Admin</title>
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-dark.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Kayane.styles.css" asp-append-version="true" />
+
+    <style>[x-cloak] { display: none !important; }</style>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased min-h-screen flex flex-col">
+
+    <!-- Admin Top Bar -->
+    <header x-data="{ mobileMenuOpen: false }" class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 shadow-lg">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="h-16 flex items-center justify-between gap-4">
+
+                <!-- Left: Brand + nav -->
+                <div class="flex items-center gap-6">
+                    <a class="flex items-center gap-2 shrink-0" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                        <div class="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center text-white font-black text-lg shadow-md">
+                            K
+                        </div>
+                        <div class="flex flex-col leading-tight">
+                            <span class="text-base font-black text-white">Kayane</span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-rose-400">Admin</span>
+                        </div>
+                    </a>
+
+                    <div class="hidden md:flex gap-1">
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
+                           class="px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition">
+                            Dashboard
+                        </a>
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors"
+                           class="px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition">
+                            Vendors
+                        </a>
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Products"
+                           class="px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition">
+                            Products
+                        </a>
+                        <a asp-area="Admin" asp-controller="AdminCategories" asp-action="Index"
+                           class="px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition">
+                            Categories
+                        </a>
+                        <a asp-area="Admin" asp-controller="AdminPayouts" asp-action="Index"
+                           class="px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition">
+                            Payouts
+                        </a>
+                        <a asp-area="Admin" asp-controller="AuditLog" asp-action="Index"
+                           class="px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition">
+                            Audit Log
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right: Actions -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <a asp-area="" asp-controller="Home" asp-action="Index"
+                       class="hidden md:inline-block text-xs font-semibold text-slate-400 hover:text-white transition">
+                        ← View Public Site
+                    </a>
+                    <form asp-area="Admin" asp-controller="Auth" asp-action="Logout" method="post" class="hidden md:inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                                class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-sm font-semibold rounded-xl transition">
+                            Logout
+                        </button>
+                    </form>
+
+                    <!-- Mobile hamburger -->
+                    <button type="button"
+                            @@click="mobileMenuOpen = !mobileMenuOpen"
+                            class="md:hidden p-2 rounded-lg text-slate-300 hover:bg-slate-800 transition">
+                        <svg x-show="!mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <svg x-show="mobileMenuOpen" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile drawer -->
+            <div x-show="mobileMenuOpen" x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="md:hidden border-t border-slate-800 py-3 space-y-1">
+
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
+                   class="block px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition">Dashboard</a>
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors"
+                   class="block px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition">Vendors</a>
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Products"
+                   class="block px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition">Products</a>
+                <a asp-area="Admin" asp-controller="AdminCategories" asp-action="Index"
+                   class="block px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition">Categories</a>
+                <a asp-area="Admin" asp-controller="AdminPayouts" asp-action="Index"
+                   class="block px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition">Payouts</a>
+                <a asp-area="Admin" asp-controller="AuditLog" asp-action="Index"
+                   class="block px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition">Audit Log</a>
+
+                <div class="border-t border-slate-800 pt-2 mt-2 space-y-1">
+                    <a asp-area="" asp-controller="Home" asp-action="Index"
+                       class="block px-4 py-2.5 text-sm font-semibold text-slate-400 hover:bg-slate-800 rounded-lg transition">
+                        ← View Public Site
+                    </a>
+                    <form asp-area="Admin" asp-controller="Auth" asp-action="Logout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                                class="w-full text-left px-4 py-2.5 text-sm font-semibold text-rose-400 hover:bg-slate-800 rounded-lg transition">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main content — dark wrapper so the CSS overrides apply -->
+    <main role="main" class="grow admin-dark">
+        @RenderBody()
+    </main>
+
+    <footer class="bg-slate-900 border-t border-slate-800 py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+            <p>&copy; 2026 Kayane Admin Portal. Restricted access.</p>
+            <p>All admin actions are logged.</p>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

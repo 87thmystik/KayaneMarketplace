@@ -1,6 +1,7 @@
 ﻿using Kayane.Data;
 using Kayane.Helpers;
 using Kayane.Models;
+using Kayane.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +13,12 @@ namespace Kayane.Areas.Admin.Controllers;
 public class AdminCategoriesController : Controller
 {
     private readonly KayaneDb _context;
+    private readonly IAdminAuditService _audit;
 
-    public AdminCategoriesController(KayaneDb context)
+    public AdminCategoriesController(KayaneDb context, IAdminAuditService audit)
     {
         _context = context;
+        _audit = audit;
     }
 
     // GET: /Admin/AdminCategories
@@ -36,6 +39,7 @@ public class AdminCategoriesController : Controller
 
         return View(categories);
     }
+
     // POST: /Admin/AdminCategories/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -56,11 +60,19 @@ public class AdminCategoriesController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        _context.Categories.Add(new Category
+        var category = new Category
         {
             CategoryId = Guid.NewGuid(),
             Name = trimmed,
             Slug = slug
+        };
+
+        _context.Categories.Add(category);
+
+        await _audit.LogAsync("category_created", "Category", category.CategoryId, new
+        {
+            name = category.Name,
+            slug = category.Slug
         });
 
         await _context.SaveChangesAsync();
@@ -87,6 +99,12 @@ public class AdminCategoriesController : Controller
         }
 
         _context.Categories.Remove(category);
+
+        await _audit.LogAsync("category_deleted", "Category", category.CategoryId, new
+        {
+            name = category.Name
+        });
+
         await _context.SaveChangesAsync();
         TempData["SuccessMessage"] = $"Category '{category.Name}' deleted.";
         return RedirectToAction(nameof(Index));

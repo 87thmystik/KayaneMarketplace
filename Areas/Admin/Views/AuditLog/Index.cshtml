@@ -1,0 +1,188 @@
+﻿@using Kayane.Extensions
+@model Kayane.ViewModels.AuditLogPageVM
+
+@{
+    ViewData["Title"] = "Admin Audit Log";
+
+    string BadgeClass(string action) => action switch
+    {
+        var a when a.Contains("approve", StringComparison.OrdinalIgnoreCase) => "bg-emerald-100 text-emerald-800",
+        var a when a.Contains("reject", StringComparison.OrdinalIgnoreCase) => "bg-rose-100 text-rose-800",
+        var a when a.Contains("status_change", StringComparison.OrdinalIgnoreCase) => "bg-sky-100 text-sky-800",
+        var a when a.Contains("create", StringComparison.OrdinalIgnoreCase) => "bg-indigo-100 text-indigo-800",
+        var a when a.Contains("delete", StringComparison.OrdinalIgnoreCase) => "bg-amber-100 text-amber-800",
+        _ => "bg-gray-100 text-gray-700"
+    };
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <!-- Header -->
+    <div class="border-b border-gray-200 pb-6">
+        <h1 class="text-3xl font-extrabold text-gray-900">Audit Log</h1>
+        <p class="text-sm text-gray-500 mt-1">Every administrative action, in order.</p>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-wrap items-end gap-3">
+        <div class="flex-1 min-w-[200px]">
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Action Type</label>
+            <select name="actionType" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <option value="">All actions</option>
+                @foreach (var t in Model.AvailableActionTypes)
+                {
+                    <option value="@t" selected="@(Model.SelectedActionType == t)">@t</option>
+                }
+            </select>
+        </div>
+
+        <div class="flex-1 min-w-[200px]">
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Target ID (exact)</label>
+            <input type="text" name="targetId" value="@Model.SearchTargetId"
+                   placeholder="Paste a GUID..."
+                   class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Period</label>
+            <select name="daysBack" class="px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <option value="1" selected="@(Model.DaysBack == 1)">Last 24 hours</option>
+                <option value="7" selected="@(Model.DaysBack == 7)">Last 7 days</option>
+                <option value="30" selected="@(Model.DaysBack == 30)">Last 30 days</option>
+                <option value="90" selected="@(Model.DaysBack == 90)">Last 90 days</option>
+                <option value="365" selected="@(Model.DaysBack == 365)">Last year</option>
+            </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button type="submit"
+                    class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+                Filter
+            </button>
+            <a asp-action="Index"
+               class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl transition">
+                Reset
+            </a>
+        </div>
+    </form>
+
+    <!-- Results summary -->
+    <div class="flex items-center justify-between text-sm">
+        <p class="text-gray-600">
+            <span class="font-bold text-gray-900">@Model.TotalItems</span>
+            entr@(Model.TotalItems == 1 ? "y" : "ies")
+            @if (Model.SelectedActionType != null || Model.SearchTargetId != null)
+            {
+                <span class="text-gray-400">(filtered)</span>
+            }
+        </p>
+        @if (Model.TotalPages > 1)
+        {
+            <p class="text-xs text-gray-400">Page @Model.CurrentPage of @Model.TotalPages</p>
+        }
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        @if (!Model.Items.Any())
+        {
+            <div class="p-16 text-center space-y-2">
+                <div class="text-4xl">📋</div>
+                <p class="text-sm text-gray-500">No admin actions match this filter.</p>
+            </div>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-[11px] uppercase font-bold text-gray-400 border-b border-gray-200 tracking-wider">
+                            <th class="px-6 py-3">When</th>
+                            <th class="px-6 py-3">Admin</th>
+                            <th class="px-6 py-3">Action</th>
+                            <th class="px-6 py-3">Target</th>
+                            <th class="px-6 py-3">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-sm">
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr class="hover:bg-gray-50/80 transition align-top">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="font-semibold text-gray-900 text-xs">
+                                        @item.Timestamp.ToLocalTime().ToString("MMM dd, HH:mm")
+                                    </div>
+                                    <div class="text-[10px] text-gray-400">
+                                        @((DateTime.UtcNow - item.Timestamp).ToHumanReadable())
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="font-semibold text-gray-900 text-xs">@item.AdminName</div>
+                                    <div class="text-[10px] text-gray-400 break-all">@item.AdminEmail</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold @BadgeClass(item.ActionType)">
+                                        @item.ActionType
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-xs font-bold text-gray-700">@item.TargetType</div>
+                                    <div class="text-[10px] font-mono text-gray-400">#@item.ShortTargetId</div>
+                                </td>
+                                <td class="px-6 py-4 max-w-md">
+                                    @if (!string.IsNullOrWhiteSpace(item.Details))
+                                    {
+                                        <details class="group">
+                                            <summary class="cursor-pointer text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+                                                View
+                                            </summary>
+                                            <pre class="mt-2 text-[10px] bg-gray-50 border border-gray-200 rounded-lg p-2 overflow-x-auto text-gray-700 whitespace-pre-wrap break-all">@item.Details</pre>
+                                        </details>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-gray-300">—</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="flex items-center justify-center gap-2 border-t border-gray-100 py-4">
+                    @if (Model.HasPreviousPage)
+                    {
+                        <a asp-action="Index"
+                           asp-route-page="@(Model.CurrentPage - 1)"
+                           asp-route-actionType="@Model.SelectedActionType"
+                           asp-route-targetId="@Model.SearchTargetId"
+                           asp-route-daysBack="@Model.DaysBack"
+                           class="px-4 py-2 bg-white border border-gray-300 hover:border-gray-400 text-xs font-semibold text-gray-700 rounded-xl transition">
+                            ← Previous
+                        </a>
+                    }
+
+                    <span class="px-4 py-2 text-xs font-bold text-gray-600">
+                        @Model.CurrentPage / @Model.TotalPages
+                    </span>
+
+                    @if (Model.HasNextPage)
+                    {
+                        <a asp-action="Index"
+                           asp-route-page="@(Model.CurrentPage + 1)"
+                           asp-route-actionType="@Model.SelectedActionType"
+                           asp-route-targetId="@Model.SearchTargetId"
+                           asp-route-daysBack="@Model.DaysBack"
+                           class="px-4 py-2 bg-white border border-gray-300 hover:border-gray-400 text-xs font-semibold text-gray-700 rounded-xl transition">
+                            Next →
+                        </a>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>

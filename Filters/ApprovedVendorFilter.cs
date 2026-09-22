@@ -38,7 +38,6 @@ public class ApprovedVendorFilter : IAsyncActionFilter
 
         var cacheKey = $"vendor_user_{userId}";
 
-        // Retrieve from cache or query DB if missing/expired
         var vendor = await _cache.GetOrCreateAsync(cacheKey, async entry =>
         {
             entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(15))
@@ -49,21 +48,22 @@ public class ApprovedVendorFilter : IAsyncActionFilter
                 .FirstOrDefaultAsync(v => v.UserId == userId);
         });
 
-        // 1. Redirect if user hasn't registered as a vendor
+        // 1. Not a vendor — send to public vendor registration
         if (vendor == null)
         {
-            context.Result = new RedirectToActionResult("RegisterVendor", "Auth", null);
+            context.Result = new RedirectToActionResult(
+                "RegisterVendor", "Auth", new { area = "" });
             return;
         }
 
-        // 2. Redirect if application is pending, rejected, or suspended
+        // 2. Pending/rejected/suspended — send to status page
         if (vendor.Status != VendorStatus.Active)
         {
-            context.Result = new RedirectToActionResult("ApplicationStatus", "Vendor", null);
+            context.Result = new RedirectToActionResult(
+                "ApplicationStatus", "Vendor", new { area = "Vendor" });
             return;
         }
 
-        // 3. Store vendor in HttpContext.Items for downstream action access
         context.HttpContext.Items["CurrentVendor"] = vendor;
 
         await next();

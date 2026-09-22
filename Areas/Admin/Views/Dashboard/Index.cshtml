@@ -7,16 +7,6 @@
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-    <!-- Top Action Bar (Logout) -->
-    <div class="flex flex-wrap items-center justify-between gap-4">
-        <form asp-controller="Auth" asp-action="Logout" asp-area="" method="post" class="inline">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-sm font-semibold rounded-xl transition shadow-sm">
-                Logout
-            </button>
-        </form>
-    </div>
-
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
         <div>
@@ -39,6 +29,10 @@
             <a asp-area="Admin" asp-controller="Dashboard" asp-action="Products"
                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
                 Moderate Products (@Model.PendingProductsCount)
+            </a>
+            <a asp-area="Admin" asp-controller="AuditLog" asp-action="Index"
+               class="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+                Audit Log
             </a>
         </div>
     </div>

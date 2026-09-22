@@ -2,29 +2,52 @@ using Kayane.Data;
 using Kayane.Models;
 using Kayane.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.RateLimiting;
-using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.RateLimiting;
-
 
 var builder = WebApplication.CreateBuilder(args);
+
 // Configure Nigerian Naira as the app's culture
 var cultureInfo = new System.Globalization.CultureInfo("en-NG");
 System.Globalization.CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+// URL prefixes for private areas (from config)
+var adminPrefix = builder.Configuration["Routing:AdminPrefix"] ?? "admin";
+var vendorPrefix = builder.Configuration["Routing:VendorPrefix"] ?? "vendor";
 
 // 1. Database Connection
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<KayaneDb>(options =>
     options.UseNpgsql(connectionString));
 
-// 2. Cookie Authentication Configuration
+// 2. Cookie Authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Auth/Login";
         options.AccessDeniedPath = "/Auth/AccessDenied";
+
+        // Redirect unauthenticated requests for admin URLs to the admin login,
+        // and everything else to the public login.
+        options.Events.OnRedirectToLogin = context =>
+        {
+            var path = context.Request.Path.Value ?? "";
+            var adminPath = "/" + adminPrefix;
+
+            if (path.StartsWith(adminPath, StringComparison.OrdinalIgnoreCase))
+            {
+                var returnUrl = Uri.EscapeDataString(
+                    context.Request.Path + context.Request.QueryString);
+                context.Response.Redirect($"{adminPath}/Auth/Login?returnUrl={returnUrl}");
+            }
+            else
+            {
+                context.Response.Redirect(context.RedirectUri);
+            }
+            return Task.CompletedTask;
+        };
     });
 
 builder.Services.AddControllersWithViews(options =>
@@ -48,11 +71,8 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// ...after AddAuthorization...
-
 builder.Services.AddRateLimiter(options =>
 {
-    // Default response when rate limited
     options.OnRejected = async (context, token) =>
     {
         context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
@@ -70,7 +90,6 @@ builder.Services.AddRateLimiter(options =>
             token);
     };
 
-    // Strict policy for login attempts: 5 per minute per IP
     options.AddPolicy("login", context =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -82,7 +101,6 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
 
-    // Looser policy for registration: 3 per 5 minutes per IP
     options.AddPolicy("register", context =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -94,7 +112,6 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
 
-    // Password reset requests: 3 per 10 minutes per IP
     options.AddPolicy("forgot-password", context =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -107,32 +124,39 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
-
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<PaymentVerificationService>();
-builder.Services.AddScoped<PaymentVerificationService>();
+builder.Services.AddScoped<IAdminAuditService, AdminAuditService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient<PsbService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 var app = builder.Build();
 
 app.UseStaticFiles();
 app.UseRouting();
-app.UseRouting();
-app.UseRateLimiter();       // ← ADD THIS
-app.UseSession();
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseRateLimiter();
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Admin area — lives under /{adminPrefix}/...
 app.MapControllerRoute(
-    name: "areas",
-    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
+    name: "admin-area",
+    pattern: $"{adminPrefix}/{{controller=Dashboard}}/{{action=Index}}/{{id?}}",
+    defaults: new { area = "Admin" },
+    constraints: new { area = "Admin" });
 
+// Vendor area — lives under /{vendorPrefix}/...
+app.MapControllerRoute(
+    name: "vendor-area",
+    pattern: $"{vendorPrefix}/{{controller=Vendor}}/{{action=Dashboard}}/{{id?}}",
+    defaults: new { area = "Vendor" },
+    constraints: new { area = "Vendor" });
+
+// Public routes — unchanged
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

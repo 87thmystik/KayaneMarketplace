@@ -19,6 +19,7 @@ public class KayaneDb : DbContext
     public DbSet<ProductReview> ProductReviews => Set<ProductReview>();
 
     public DbSet<Order> Orders { get; set; } = null!;
+    public DbSet<BuyerAddress> BuyerAddresses { get; set; } = null!;
     public DbSet<OrderItem> OrderItems { get; set; } = null!;
     public DbSet<Payment> Payments { get; set; } = null!;
     public DbSet<Notification> Notifications { get; set; } = null!;
@@ -43,6 +44,13 @@ public class KayaneDb : DbContext
             .WithMany(c => c.Products)
             .HasForeignKey(p => p.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<AdminAction>()
+            .HasIndex(a => a.Timestamp)
+            .IsDescending();
+
+        modelBuilder.Entity<AdminAction>()
+            .HasIndex(a => a.ActionType);
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

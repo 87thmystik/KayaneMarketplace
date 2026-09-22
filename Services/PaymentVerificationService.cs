@@ -9,17 +9,20 @@ public class PaymentVerificationService
     private readonly KayaneDb _context;
     private readonly PsbService _psbService;
     private readonly IEmailService _emailService;
+    private readonly INotificationService _notifications;
     private readonly ILogger<PaymentVerificationService> _logger;
 
     public PaymentVerificationService(
         KayaneDb context,
         PsbService psbService,
         IEmailService emailService,
+        INotificationService notifications,
         ILogger<PaymentVerificationService> logger)
     {
         _context = context;
         _psbService = psbService;
         _emailService = emailService;
+        _notifications = notifications;
         _logger = logger;
     }
 
@@ -43,7 +46,6 @@ public class PaymentVerificationService
         if (payment.Status == PaymentStatus.Success)
             return VerifyResult.AlreadyPaid;
 
-        // Ask the gateway.
         var verification = await _psbService.VerifyTransactionAsync(reference);
 
         if (!verification.IsSuccess)
@@ -123,12 +125,41 @@ public class PaymentVerificationService
             wallet.UpdatedAt = DateTime.UtcNow;
         }
 
+        // Queue buyer notification — order received
+        if (!string.IsNullOrEmpty(order.CustomerEmail))
+        {
+            var reference = order.OrderId.ToString()[..8].ToUpperInvariant();
+            await _notifications.NotifyAsync(
+                order.UserId,
+                "Order received",
+                $"We received your order #{reference}. " +
+                $"Total: {order.TotalAmount:C}. We'll notify you when it ships.",
+                NotificationType.OrderUpdate);
+        }
+
+        // Queue vendor notifications for each vendor with items in this order
+        var vendorUserIds = await _context.Vendors
+            .Where(v => order.OrderItems.Select(i => i.Product!.VendorId).Contains(v.VendorId))
+            .Select(v => v.UserId)
+            .Distinct()
+            .ToListAsync();
+
+        if (vendorUserIds.Any())
+        {
+            var reference = order.OrderId.ToString()[..8].ToUpperInvariant();
+            await _notifications.NotifyManyAsync(
+                vendorUserIds,
+                "New paid order",
+                $"You have a new paid order (#{reference}). Please prepare for shipment.",
+                NotificationType.OrderUpdate);
+        }
+
+        // Single save — persists payment, order, wallets, and any queued notifications.
         await _context.SaveChangesAsync();
 
-        // Notify each vendor (best effort — logged on failure, never throws).
-        await NotifyVendorsAsync(order);
+        // Best-effort emails (do NOT fail the transaction on email failure)
+        await NotifyVendorsByEmailAsync(order);
 
-        // Fire customer confirmation email — best effort.
         try
         {
             await _emailService.SendEmailAsync(
@@ -143,7 +174,7 @@ public class PaymentVerificationService
         }
     }
 
-    private async Task NotifyVendorsAsync(Order order)
+    private async Task NotifyVendorsByEmailAsync(Order order)
     {
         var itemsByVendor = order.OrderItems
             .Where(oi => oi.Product != null)
