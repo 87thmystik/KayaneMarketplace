@@ -19,12 +19,13 @@ namespace Kayane.Services
         public async Task SignInAsync(User user, Vendor? vendor = null, bool isPersistent = false)
         {
             var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-            new Claim(ClaimTypes.Name, user.Name),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role.ToString())
-        };
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.Name),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
+                new Claim("EmailVerified", user.EmailVerified ? "true" : "false")   // NEW
+            };
 
             if (user.Role == UserRole.Vendor && vendor != null)
             {

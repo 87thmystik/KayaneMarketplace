@@ -2,8 +2,7 @@
 using Kayane.Models;
 using Kayane.Services;
 using Kayane.ViewModels;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -17,27 +16,46 @@ namespace Kayane.Controllers
         private readonly KayaneDb _context;
         private readonly IAuthService _authService;
         private readonly IEmailService _emailService;
+        private readonly IEmailVerificationService _emailVerification;
         private readonly ILogger<AuthController> _logger;
 
         public AuthController(
             KayaneDb context,
             IAuthService authService,
             IEmailService emailService,
+            IEmailVerificationService emailVerification,
             ILogger<AuthController> logger)
         {
             _context = context;
             _authService = authService;
             _emailService = emailService;
+            _emailVerification = emailVerification;
             _logger = logger;
         }
 
         // ===================== VENDOR REGISTRATION =====================
 
         [HttpGet]
-        public IActionResult RegisterVendor(string? returnUrl = null)
+        public async Task<IActionResult> RegisterVendor(string? returnUrl = null)
         {
             if (User.Identity?.IsAuthenticated == true)
             {
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (Guid.TryParse(userIdStr, out var userId))
+                {
+                    var verified = await _context.Users
+                        .AsNoTracking()
+                        .Where(u => u.UserId == userId)
+                        .Select(u => u.EmailVerified)
+                        .FirstOrDefaultAsync();
+
+                    if (!verified)
+                    {
+                        TempData["ErrorMessage"] = "Please verify your email before applying as a vendor.";
+                        return RedirectToAction(nameof(ResendVerification));
+                    }
+                }
+
                 return LocalRedirect(returnUrl ?? Url.Action("Dashboard", "Vendor", new { area = "Vendor" }) ?? "~/");
             }
             ViewData["ReturnUrl"] = returnUrl;
@@ -82,6 +100,9 @@ namespace Kayane.Controllers
                 var passwordHasher = new PasswordHasher<User>();
                 user.PasswordHash = passwordHasher.HashPassword(user, model.Password);
 
+                // Generate verification token BEFORE save so the hash lands with the row.
+                var rawVerificationToken = _emailVerification.GenerateToken(user);
+
                 var vendor = new Vendor
                 {
                     VendorId = Guid.NewGuid(),
@@ -99,10 +120,19 @@ namespace Kayane.Controllers
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
+                // Send verification email AFTER commit — email failure shouldn't roll back the registration.
+                var verifyUrl = Url.Action(
+                    "VerifyEmail",
+                    "Auth",
+                    new { token = rawVerificationToken, email = user.Email },
+                    Request.Scheme)!;
+
+                await _emailVerification.SendVerificationEmailAsync(user, rawVerificationToken, verifyUrl);
+
                 await _authService.SignInAsync(user, vendor);
 
-                TempData["SuccessMessage"] = "Vendor registration submitted! Your account is pending admin approval.";
-                return LocalRedirect(returnUrl);
+                TempData["SuccessMessage"] = "Vendor registration submitted! Check your email to verify your account.";
+                return RedirectToAction(nameof(ResendVerification));
             }
             catch (Exception ex)
             {
@@ -112,6 +142,122 @@ namespace Kayane.Controllers
                 ViewData["ReturnUrl"] = returnUrl;
                 return View(model);
             }
+        }
+
+        // ===================== EMAIL VERIFICATION =====================
+
+        // GET: /Auth/VerifyEmail
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> VerifyEmail(string token, string email)
+        {
+            if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(email))
+            {
+                TempData["ErrorMessage"] = "Invalid verification link.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            var normalizedEmail = email.Trim().ToLowerInvariant();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Invalid verification link.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            if (user.EmailVerified)
+            {
+                TempData["SuccessMessage"] = "Your email is already verified.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            if (string.IsNullOrWhiteSpace(user.EmailVerificationTokenHash) ||
+                user.EmailVerificationTokenExpiresAt == null ||
+                user.EmailVerificationTokenExpiresAt < DateTime.UtcNow)
+            {
+                TempData["ErrorMessage"] = "Verification link has expired. Please request a new one.";
+                return RedirectToAction(nameof(ResendVerification));
+            }
+
+            var tokenHash = EmailVerificationService.ComputeSha256Hash(token);
+            if (!string.Equals(user.EmailVerificationTokenHash, tokenHash, StringComparison.Ordinal))
+            {
+                TempData["ErrorMessage"] = "Invalid verification link.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            // Mark verified
+            user.EmailVerified = true;
+            user.EmailVerifiedAt = DateTime.UtcNow;
+            user.EmailVerificationTokenHash = null;
+            user.EmailVerificationTokenExpiresAt = null;
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Email verified for {Email}", user.Email);
+
+            // Refresh the auth cookie so the EmailVerified claim updates immediately.
+            // Only do this if the same user is currently signed in on this browser.
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (Guid.TryParse(currentUserIdStr, out var currentUserId) && currentUserId == user.UserId)
+                {
+                    Vendor? vendor = null;
+                    if (user.Role == UserRole.Vendor)
+                    {
+                        vendor = await _context.Vendors
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(v => v.UserId == user.UserId);
+                    }
+
+                    await _authService.SignInAsync(user, vendor, isPersistent: true);
+                }
+            }
+
+            TempData["SuccessMessage"] = "Email verified! You can now place orders.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        // GET: /Auth/ResendVerification
+        [HttpGet]
+        [Authorize]
+        public IActionResult ResendVerification()
+        {
+            return View();
+        }
+
+        // POST: /Auth/ResendVerification
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        [EnableRateLimiting("forgot-password")]
+        public async Task<IActionResult> ResendVerification(string unused)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Challenge();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            if (user == null) return NotFound();
+
+            if (user.EmailVerified)
+            {
+                TempData["SuccessMessage"] = "Your email is already verified.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var rawToken = _emailVerification.GenerateToken(user);
+            await _context.SaveChangesAsync();
+
+            var verifyUrl = Url.Action("VerifyEmail", "Auth",
+                new { token = rawToken, email = user.Email }, Request.Scheme)!;
+
+            await _emailVerification.SendVerificationEmailAsync(user, rawToken, verifyUrl);
+
+            TempData["SuccessMessage"] = "Verification email sent. Check your inbox.";
+            return RedirectToAction(nameof(ResendVerification));
         }
 
         // ===================== BUYER REGISTRATION =====================
@@ -161,15 +307,26 @@ namespace Kayane.Controllers
             var passwordHasher = new PasswordHasher<User>();
             user.PasswordHash = passwordHasher.HashPassword(user, model.Password);
 
+            // Generate verification token BEFORE saving so hash is in the DB row.
+            var rawVerificationToken = _emailVerification.GenerateToken(user);
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+
+            var verifyUrl = Url.Action(
+                "VerifyEmail",
+                "Auth",
+                new { token = rawVerificationToken, email = user.Email },
+                Request.Scheme)!;
+
+            await _emailVerification.SendVerificationEmailAsync(user, rawVerificationToken, verifyUrl);
 
             _logger.LogInformation("New buyer registered: {Email}", normalizedEmail);
 
             await _authService.SignInAsync(user);
 
-            TempData["SuccessMessage"] = "Welcome to Kayane! Your account is ready.";
-            return LocalRedirect(returnUrl);
+            TempData["SuccessMessage"] = "Account created! Check your email to verify your account.";
+            return RedirectToAction(nameof(ResendVerification));
         }
 
         // ===================== LOGIN / LOGOUT =====================
@@ -208,7 +365,6 @@ namespace Kayane.Controllers
                 return View(model);
             }
 
-            // Block banned users
             if (user.IsBanned)
             {
                 ModelState.AddModelError(string.Empty,
@@ -219,7 +375,6 @@ namespace Kayane.Controllers
                 return View(model);
             }
 
-            // Block deleted users
             if (user.DeletedAt.HasValue)
             {
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
@@ -227,7 +382,6 @@ namespace Kayane.Controllers
                 return View(model);
             }
 
-            // Block admins from the public login (must use admin portal) — existing rule
             if (user.Role == UserRole.Admin)
             {
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
@@ -292,7 +446,7 @@ namespace Kayane.Controllers
 
             return RedirectToAction("Index", "Home");
         }
-        // Access Denied page for unauthorized access attempts
+
         [HttpGet]
         public IActionResult AccessDenied()
         {

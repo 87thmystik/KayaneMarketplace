@@ -132,6 +132,7 @@ builder.Services.AddScoped<IAdminAuditService, AdminAuditService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient<PsbService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
 
 var app = builder.Build();
 

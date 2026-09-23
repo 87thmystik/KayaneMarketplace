@@ -37,7 +37,11 @@ public class CheckoutController : Controller
             TempData["ErrorMessage"] = "Your cart is empty.";
             return RedirectToAction("Index", "Cart");
         }
-
+        if (!await IsCurrentUserVerifiedAsync())
+        {
+            TempData["ErrorMessage"] = "Please verify your email before checking out.";
+            return RedirectToAction("ResendVerification", "Auth");
+        }
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         Guid.TryParse(userIdClaim, out var userId);
 
@@ -75,7 +79,11 @@ public class CheckoutController : Controller
             TempData["ErrorMessage"] = "Your cart is empty.";
             return RedirectToAction("Index", "Cart");
         }
-
+        if (!await IsCurrentUserVerifiedAsync())
+        {
+            TempData["ErrorMessage"] = "Please verify your email before checking out.";
+            return RedirectToAction("ResendVerification", "Auth");
+        }
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userIdClaim, out var userId))
         {
@@ -366,5 +374,16 @@ public class CheckoutController : Controller
         if (order == null) return NotFound();
 
         return View(order);
+    }
+    private async Task<bool> IsCurrentUserVerifiedAsync()
+    {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdStr, out var userId)) return false;
+
+        return await _context.Users
+            .AsNoTracking()
+            .Where(u => u.UserId == userId)
+            .Select(u => u.EmailVerified)
+            .FirstOrDefaultAsync();
     }
 }
