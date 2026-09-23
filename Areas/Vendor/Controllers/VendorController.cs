@@ -597,6 +597,101 @@ public class VendorController : Controller
         TempData["SuccessMessage"] = "Profile and bank details updated successfully.";
         return RedirectToAction(nameof(EditProfile));
     }
+    // POST: /Vendor/CancelOrderItem
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [ApprovedVendor]
+    public async Task<IActionResult> CancelOrderItem(CancelOrderItemVM model)
+    {
+        var orderItem = await _context.OrderItems
+            .Include(oi => oi.Product)
+            .Include(oi => oi.Order)
+            .FirstOrDefaultAsync(oi => oi.OrderItemId == model.OrderItemId
+                                       && oi.Product.VendorId == CurrentVendor.VendorId);
+
+        if (orderItem == null)
+        {
+            TempData["ErrorMessage"] = "Order item not found or unauthorized.";
+            return RedirectToAction(nameof(Orders));
+        }
+
+        // Only cancellable if the vendor hasn't started processing
+        if (orderItem.Status != OrderItemStatus.Pending)
+        {
+            TempData["ErrorMessage"] = "This item can't be cancelled — you've already started processing it.";
+            return RedirectToAction(nameof(Orders));
+        }
+
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] = "Please provide a reason.";
+            return RedirectToAction(nameof(Orders));
+        }
+
+        // Restore stock
+        if (orderItem.Product != null)
+        {
+            orderItem.Product.Stock += orderItem.Quantity;
+        }
+
+        orderItem.Status = OrderItemStatus.Cancelled;
+
+        // Debit vendor wallet if buyer paid
+        var order = orderItem.Order;
+        if (order != null && order.PaymentStatus == PaymentStatus.Success)
+        {
+            var wallet = await _context.VendorWallets
+                .FirstOrDefaultAsync(w => w.VendorId == orderItem.Product!.VendorId);
+
+            if (wallet != null)
+            {
+                var debit = Math.Min(wallet.Balance, orderItem.TotalPrice);
+                wallet.Balance -= debit;
+                wallet.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        // Notify buyer
+        if (order != null)
+        {
+            var reference = order.OrderId.ToString()[..8].ToUpperInvariant();
+            await _notifications.NotifyAsync(
+                order.UserId,
+                "Item cancelled by vendor",
+                $"The vendor cancelled '{orderItem.Product?.Name}' from your order #{reference}. " +
+                (order.PaymentStatus == PaymentStatus.Success
+                    ? "A refund will be processed."
+                    : ""),
+                NotificationType.OrderUpdate);
+        }
+
+        // If every item is now Cancelled, cancel the whole order.
+        if (order != null)
+        {
+            await _context.SaveChangesAsync();
+
+            var allStatuses = await _context.OrderItems
+                .Where(oi => oi.OrderId == order.OrderId)
+                .Select(oi => oi.Status)
+                .ToListAsync();
+
+            if (allStatuses.All(s => s == OrderItemStatus.Cancelled))
+            {
+                order.Status = OrderStatus.Cancelled;
+                order.UpdatedAt = DateTime.UtcNow;
+            }
+            else if (allStatuses.All(s => s == OrderItemStatus.Delivered))
+            {
+                order.Status = OrderStatus.Completed;
+                order.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Order item cancelled.";
+        return RedirectToAction(nameof(Orders));
+    }
 
     #endregion
 }

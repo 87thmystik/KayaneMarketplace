@@ -29,6 +29,25 @@
            class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 hover:border-gray-400 rounded-xl text-sm font-semibold text-gray-700 bg-white transition shadow-sm w-fit">
             &larr; Back to Orders
         </a>
+        @{
+            var canCancel = Model.Status != OrderStatus.Cancelled
+                            && Model.Status != OrderStatus.Completed
+                            && Model.Items.All(i => i.Status == OrderItemStatus.Pending);
+        }
+
+        <div class="flex items-center gap-3">
+            @if (canCancel)
+            {
+                <a asp-action="Cancel" asp-route-id="@Model.OrderId"
+                   class="inline-flex items-center justify-center px-4 py-2 border border-rose-300 hover:border-rose-400 hover:bg-rose-50 rounded-xl text-sm font-semibold text-rose-700 transition w-fit">
+                    Cancel Order
+                </a>
+            }
+            <a asp-action="Index"
+               class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 hover:border-gray-400 rounded-xl text-sm font-semibold text-gray-700 bg-white transition shadow-sm w-fit">
+                &larr; Back to Orders
+            </a>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">

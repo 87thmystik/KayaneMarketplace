@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Kayane")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5a23929598a8b4cca54ea74b0453cc43e58f6319")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d27fc7c4d7ed441353fced35fe7ea0f00f63d75c")]
 [assembly: System.Reflection.AssemblyProductAttribute("Kayane")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Kayane")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,6 +1,5 @@
 wwwroot\css\admin-dark.css
 wwwroot\css\input.css
-wwwroot\css\site.css
 wwwroot\favicon.ico
 wwwroot\js\site.js
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
@@ -71,9 +70,9 @@ wwwroot\uploads\vendors\banners\58400c9d-6513-4589-bba8-d220d4e80a34.png
 wwwroot\uploads\vendors\logos\48ff3bbf-8e37-4aba-a394-13e95344c97e.jpg
 wwwroot\uploads\vendors\logos\6bc335e6-a6a5-44bc-b597-b1ef5081a19a.jpg
 wwwroot\uploads\vendors\logos\746661b3-9a58-4d36-99c1-93cbe06504d2.png
+wwwroot\css\site.css
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\wwwroot\css\admin-dark.css
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\wwwroot\css\input.css
-C:\Users\danie\source\repos\KayaneMarketplace\Kayane\wwwroot\css\site.css
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\wwwroot\favicon.ico
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\wwwroot\js\site.js
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
@@ -135,3 +134,4 @@ C:\Users\danie\source\repos\KayaneMarketplace\Kayane\wwwroot\lib\jquery\dist\jqu
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\wwwroot\lib\jquery\dist\jquery.slim.min.js
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\wwwroot\lib\jquery\dist\jquery.slim.min.map
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\wwwroot\lib\jquery\LICENSE.txt
+C:\Users\danie\source\repos\KayaneMarketplace\Kayane\wwwroot\css\site.css

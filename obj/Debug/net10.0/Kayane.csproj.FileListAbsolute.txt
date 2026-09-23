@@ -116,7 +116,6 @@ C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\scopedcss
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\scopedcss\projectbundle\Kayane.bundle.scp.css
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\compressed\1v1pniw2ap-{0}-e6127pfojv-e6127pfojv.gz
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\compressed\1cns1z6tyb-{0}-f7rcrjvjbs-f7rcrjvjbs.gz
-C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\compressed\vosy8ro09g-{0}-y9lq2c3212-y9lq2c3212.gz
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\compressed\ec0wud6o98-{0}-61n19gt1b8-61n19gt1b8.gz
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\compressed\2x7agxl2rg-{0}-xtxxf3hu2r-xtxxf3hu2r.gz
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\compressed\17fqteuk4q-{0}-bqjiyaj88i-bqjiyaj88i.gz
@@ -192,3 +191,4 @@ C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\refint\Ka
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\Kayane.pdb
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\Kayane.genruntimeconfig.cache
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\ref\Kayane.dll
+C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\compressed\vosy8ro09g-{0}-ui9ycehtok-ui9ycehtok.gz
