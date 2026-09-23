@@ -146,6 +146,7 @@ public class AccountController : Controller
         }
 
         user.PasswordHash = hasher.HashPassword(user, model.NewPassword);
+        user.MustChangePassword = false;
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("User {UserId} changed password.", userId);

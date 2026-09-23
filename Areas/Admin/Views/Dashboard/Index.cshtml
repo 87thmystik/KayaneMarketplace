@@ -22,6 +22,14 @@
                class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
                 Payout Requests
             </a>
+            <a asp-area="Admin" asp-controller="Refunds" asp-action="Index"
+               class="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+                Refunds
+            </a>
+            <a asp-area="Admin" asp-controller="Users" asp-action="Index"
+               class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+                Users
+            </a>
             <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors"
                class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
                 Manage Vendors (@Model.PendingVendorsCount)

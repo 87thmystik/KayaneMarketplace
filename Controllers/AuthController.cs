@@ -201,9 +201,34 @@ namespace Kayane.Controllers
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
 
-            // Reject admin accounts here — they must use the separate admin portal.
-            // Same generic message so we don't reveal that an admin portal exists.
-            if (user == null || user.Role == UserRole.Admin)
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                ViewData["ReturnUrl"] = returnUrl;
+                return View(model);
+            }
+
+            // Block banned users
+            if (user.IsBanned)
+            {
+                ModelState.AddModelError(string.Empty,
+                    user.BannedReason != null
+                        ? $"Your account has been suspended: {user.BannedReason}"
+                        : "Your account has been suspended. Contact support.");
+                ViewData["ReturnUrl"] = returnUrl;
+                return View(model);
+            }
+
+            // Block deleted users
+            if (user.DeletedAt.HasValue)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                ViewData["ReturnUrl"] = returnUrl;
+                return View(model);
+            }
+
+            // Block admins from the public login (must use admin portal) — existing rule
+            if (user.Role == UserRole.Admin)
             {
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                 ViewData["ReturnUrl"] = returnUrl;
@@ -243,6 +268,12 @@ namespace Kayane.Controllers
             await _authService.SignInAsync(user, vendor, model.RememberMe);
 
             _logger.LogInformation("User {Email} logged in successfully.", user.Email);
+
+            if (user.MustChangePassword)
+            {
+                TempData["ErrorMessage"] = "You must change your password before continuing.";
+                return RedirectToAction("ChangePassword", "Account");
+            }
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl) && returnUrl != "/")
             {

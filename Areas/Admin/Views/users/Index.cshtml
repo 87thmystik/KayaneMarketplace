@@ -1,0 +1,338 @@
+﻿@model Kayane.ViewModels.AdminUserListVM
+@using Kayane.Models
+
+@{
+    ViewData["Title"] = "User Management";
+
+    string RoleBadge(UserRole role) => role switch
+    {
+        UserRole.Admin => "bg-rose-100 text-rose-800",
+        UserRole.Vendor => "bg-emerald-100 text-emerald-800",
+        _ => "bg-indigo-100 text-indigo-800"
+    };
+
+    string TabClass(string? value, string current) =>
+        value == current
+            ? "bg-indigo-600 text-white shadow-sm"
+            : "bg-gray-100 text-gray-600 hover:bg-gray-200";
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <!-- Header -->
+    <div class="border-b border-gray-200 pb-6">
+        <h1 class="text-3xl font-extrabold text-gray-900">User Management</h1>
+        <p class="text-sm text-gray-500 mt-1">
+            Review accounts, ban abusive users, and force password resets.
+        </p>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-xl font-medium">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-sm rounded-xl font-medium">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Filters -->
+    <div class="flex flex-wrap items-end gap-4 bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+        <div class="flex flex-wrap gap-2">
+            <a asp-action="Index" asp-route-statusFilter="active"
+               asp-route-roleFilter="@Model.RoleFilter" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition @TabClass("active", Model.StatusFilter ?? "active")">
+                Active
+            </a>
+            <a asp-action="Index" asp-route-statusFilter="banned"
+               asp-route-roleFilter="@Model.RoleFilter" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition @TabClass("banned", Model.StatusFilter)">
+                Banned
+            </a>
+            <a asp-action="Index" asp-route-statusFilter="deleted"
+               asp-route-roleFilter="@Model.RoleFilter" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition @TabClass("deleted", Model.StatusFilter)">
+                Deleted
+            </a>
+            <a asp-action="Index" asp-route-statusFilter="all"
+               asp-route-roleFilter="@Model.RoleFilter" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition @TabClass("all", Model.StatusFilter)">
+                All
+            </a>
+        </div>
+
+        <form method="get" asp-action="Index" class="flex items-end gap-2 ml-auto">
+            <input type="hidden" name="statusFilter" value="@Model.StatusFilter" />
+            <div>
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Role</label>
+                <select name="roleFilter" class="px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    <option value="">All roles</option>
+                    <option value="@UserRole.User" selected="@(Model.RoleFilter == UserRole.User)">Buyer</option>
+                    <option value="@UserRole.Vendor" selected="@(Model.RoleFilter == UserRole.Vendor)">Vendor</option>
+                    <option value="@UserRole.Admin" selected="@(Model.RoleFilter == UserRole.Admin)">Admin</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Search</label>
+                <input type="text" name="searchKeyword" value="@Model.SearchKeyword"
+                       placeholder="Name or email..."
+                       class="px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            </div>
+            <button type="submit"
+                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition">
+                Filter
+            </button>
+            <a asp-action="Index"
+               class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition">
+                Reset
+            </a>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        @if (!Model.Users.Any())
+        {
+            <div class="p-12 text-center text-sm text-gray-500">
+                No users match these filters.
+            </div>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-[11px] uppercase font-bold text-gray-400 border-b border-gray-200 tracking-wider">
+                            <th class="px-6 py-3">User</th>
+                            <th class="px-6 py-3">Role</th>
+                            <th class="px-6 py-3">Activity</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3">Joined</th>
+                            <th class="px-6 py-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-sm">
+                        @foreach (var u in Model.Users)
+                        {
+                            <tr class="hover:bg-gray-50/80 transition align-top">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-lg flex items-center justify-center font-bold text-sm shrink-0">
+                                            @u.Initial
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="font-bold text-gray-900 text-sm truncate">@u.Name</div>
+                                            <div class="text-[11px] text-gray-500 truncate">@u.Email</div>
+                                            @if (!string.IsNullOrEmpty(u.Phone))
+                                            {
+                                                <div class="text-[10px] text-gray-400">@u.Phone</div>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold @RoleBadge(u.Role)">
+                                        @u.Role
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-xs">
+                                    @if (u.Role == UserRole.User)
+                                    {
+                                        <div class="text-gray-700">
+                                            <strong>@u.TotalOrders</strong> order@(u.TotalOrders == 1 ? "" : "s")
+                                        </div>
+                                        <div class="text-gray-500">@u.TotalSpent.ToString("C") spent</div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-gray-400 italic">—</span>
+                                    }
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if (u.IsDeleted)
+                                    {
+                                        <span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold bg-gray-200 text-gray-700">
+                                            🗑 Deleted
+                                        </span>
+                                    }
+                                    else if (u.IsBanned)
+                                    {
+                                        <span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                                            🚫 Banned
+                                        </span>
+                                        @if (!string.IsNullOrEmpty(u.BannedReason))
+                                        {
+                                            <div class="text-[10px] text-gray-400 mt-1 max-w-xs">@u.BannedReason</div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                            ✓ Active
+                                        </span>
+                                    }
+                                    @if (u.MustChangePassword)
+                                    {
+                                        <div class="mt-1">
+                                            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                                ⚠ Reset required
+                                            </span>
+                                        </div>
+                                    }
+                                </td>
+                                <td class="px-6 py-4 text-xs text-gray-500">
+                                    @u.CreatedAt.ToString("MMM dd, yyyy")
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    @if (u.Role == UserRole.Admin)
+                                    {
+                                        <span class="text-[10px] text-gray-400 italic">Protected</span>
+                                    }
+                                    else if (u.IsDeleted)
+                                    {
+                                        <span class="text-[10px] text-gray-400 italic">Deleted</span>
+                                    }
+                                    else
+                                    {
+                                        <div class="flex items-center justify-end gap-2 flex-wrap">
+                                            @if (u.IsBanned)
+                                            {
+                                                <form asp-action="Unban" method="post" class="inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="userId" value="@u.UserId" />
+                                                    <button type="submit"
+                                                            class="px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 text-[10px] font-bold rounded-lg transition">
+                                                        Unban
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <button type="button"
+                                                        onclick="openBanModal('@u.UserId', @System.Text.Json.JsonSerializer.Serialize(u.Name))"
+                                                        class="px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 text-[10px] font-bold rounded-lg transition">
+                                                    Ban
+                                                </button>
+                                            }
+
+                                            <form asp-action="ForcePasswordReset" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@u.UserId" />
+                                                <button type="submit"
+                                                        onclick="return confirm('Force @u.Name to reset password on next login?')"
+                                                        class="px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 text-[10px] font-bold rounded-lg transition">
+                                                    Force Reset
+                                                </button>
+                                            </form>
+
+                                            <form asp-action="Delete" method="post" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@u.UserId" />
+                                                <button type="submit"
+                                                        onclick="return confirm('Delete @u.Name? This cannot be undone.')"
+                                                        class="px-3 py-1.5 bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200 text-[10px] font-bold rounded-lg transition">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="flex items-center justify-center gap-2 border-t border-gray-100 py-4">
+                    @if (Model.HasPreviousPage)
+                    {
+                        <a asp-action="Index"
+                           asp-route-page="@(Model.CurrentPage - 1)"
+                           asp-route-roleFilter="@Model.RoleFilter"
+                           asp-route-statusFilter="@Model.StatusFilter"
+                           asp-route-searchKeyword="@Model.SearchKeyword"
+                           class="px-4 py-2 bg-white border border-gray-300 hover:border-gray-400 text-xs font-semibold text-gray-700 rounded-xl transition">
+                            ← Previous
+                        </a>
+                    }
+
+                    <span class="px-4 py-2 text-xs font-bold text-gray-600">
+                        Page @Model.CurrentPage of @Model.TotalPages
+                    </span>
+
+                    @if (Model.HasNextPage)
+                    {
+                        <a asp-action="Index"
+                           asp-route-page="@(Model.CurrentPage + 1)"
+                           asp-route-roleFilter="@Model.RoleFilter"
+                           asp-route-statusFilter="@Model.StatusFilter"
+                           asp-route-searchKeyword="@Model.SearchKeyword"
+                           class="px-4 py-2 bg-white border border-gray-300 hover:border-gray-400 text-xs font-semibold text-gray-700 rounded-xl transition">
+                            Next →
+                        </a>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- Ban Modal -->
+<div id="banModal" style="display:none;" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="closeBanModal()"></div>
+
+    <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-5">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Ban User</h3>
+                <p id="banModalUser" class="text-xs text-gray-500 mt-0.5"></p>
+            </div>
+            <button type="button" onclick="closeBanModal()"
+                    class="text-gray-400 hover:text-gray-700 text-xl leading-none">
+                &times;
+            </button>
+        </div>
+
+        <form asp-action="Ban" method="post" class="space-y-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="userId" id="banModalUserId" />
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Reason (optional)</label>
+                <textarea name="reason" rows="3" maxlength="500"
+                          placeholder="e.g. Repeated abuse, fraudulent orders..."
+                          class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none"></textarea>
+                <p class="text-[10px] text-gray-400 mt-1">The reason is shown to the user when they try to sign in.</p>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button type="button" onclick="closeBanModal()"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl transition shadow-sm">
+                    Confirm Ban
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openBanModal(userId, userName) {
+        document.getElementById('banModalUserId').value = userId;
+        document.getElementById('banModalUser').textContent = 'User: ' + userName;
+        document.getElementById('banModal').style.display = 'flex';
+    }
+    function closeBanModal() {
+        document.getElementById('banModal').style.display = 'none';
+    }
+</script>

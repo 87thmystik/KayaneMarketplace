@@ -3,6 +3,7 @@ using System;
 using Kayane.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Kayane.Migrations
 {
     [DbContext(typeof(KayaneDb))]
-    partial class KayaneDbModelSnapshot : ModelSnapshot
+    [Migration("20260923144754_AddRefundTracking")]
+    partial class AddRefundTracking
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -504,30 +507,14 @@ namespace Kayane.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
-                    b.Property<string>("BannedReason")
-                        .HasColumnType("text")
-                        .HasColumnName("banned_reason");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("email");
-
-                    b.Property<bool>("IsBanned")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_banned");
-
-                    b.Property<bool>("MustChangePassword")
-                        .HasColumnType("boolean")
-                        .HasColumnName("must_change_password");
 
                     b.Property<string>("Name")
                         .IsRequired()

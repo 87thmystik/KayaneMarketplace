@@ -649,6 +649,15 @@ public class VendorController : Controller
                 wallet.Balance -= debit;
                 wallet.UpdatedAt = DateTime.UtcNow;
             }
+
+            var payment = await _context.Payments
+                 .FirstOrDefaultAsync(p => p.OrderId == order.OrderId);
+
+            if (payment != null && payment.Status == PaymentStatus.Success)
+            {
+                payment.Status = PaymentStatus.Refunded;
+                payment.UpdatedAt = DateTime.UtcNow;
+            }
         }
 
         // Notify buyer

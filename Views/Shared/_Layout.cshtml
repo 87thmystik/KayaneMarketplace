@@ -8,6 +8,12 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Kayane.styles.css" asp-append-version="true" />
     <style>[x-cloak] { display: none !important; }</style>
+        <script>
+                document.addEventListener('alpine:init', () => {
+                    console.log('Alpine initialized');
+                });
+        </script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>

@@ -184,11 +184,10 @@ C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\staticweb
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\staticwebassets.development.json
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\staticwebassets.build.endpoints.json
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\swae.build.ex.cache
-C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\Kayane.csproj.Up2Date
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\Kayane.dll
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\refint\Kayane.dll
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\Kayane.pdb
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\Kayane.genruntimeconfig.cache
 C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\ref\Kayane.dll
-C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\compressed\vosy8ro09g-{0}-ui9ycehtok-ui9ycehtok.gz
+C:\Users\danie\source\repos\KayaneMarketplace\Kayane\obj\Debug\net10.0\compressed\vosy8ro09g-{0}-ivrkf5o7a2-ivrkf5o7a2.gz

@@ -1,7 +1,5 @@
-﻿using Kayane.Models;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Numerics;
 
 
 namespace Kayane.Models;
@@ -26,6 +24,17 @@ public class  User
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    [Column("is_banned")]
+    public bool IsBanned { get; set; }
+
+    [Column("banned_reason")]
+    public string? BannedReason { get; set; }
+
+    [Column("must_change_password")]
+    public bool MustChangePassword { get; set; }
+
+    [Column("deleted_at")]
+    public DateTime? DeletedAt { get; set; }
 
     public Vendor? VendorProfile { get; set; }
     public string Phone { get; set; } = string.Empty;
