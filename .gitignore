@@ -1,0 +1,24 @@
+﻿# Build output
+bin/
+obj/
+
+# User-specific
+*.user
+.vs/
+.vscode/
+
+# Local configuration with secrets
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Local.json
+
+# Node
+node_modules/
+
+# Uploaded files
+wwwroot/uploads/*
+!wwwroot/uploads/**/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
