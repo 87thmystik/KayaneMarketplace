@@ -21,41 +21,71 @@
                 </div>
             }
 
-            <form asp-action="Profile" method="post"
-                  class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-5">
-                @Html.AntiForgeryToken()
-                <div asp-validation-summary="ModelOnly" class="text-sm text-rose-600 font-medium"></div>
+           <!-- Avatar block -->
+<div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col sm:flex-row items-center gap-5">
+    @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+    {
+        <img src="@Model.AvatarUrl" alt="Avatar"
+             class="w-20 h-20 rounded-full object-cover border-2 border-gray-200 bg-white" />
+    }
+    else
+    {
+        <div class="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+            @(string.IsNullOrWhiteSpace(Model.Name) ? "?" : Model.Name.Trim()[..1].ToUpperInvariant())
+        </div>
+    }
 
-                <div>
-                    <label asp-for="Name" class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Full Name</label>
-                    <input asp-for="Name" required
-                           class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                    <span asp-validation-for="Name" class="text-xs text-rose-500 mt-1 block"></span>
-                </div>
+    <div class="flex-1 text-center sm:text-left">
+        <h3 class="font-bold text-gray-900">Your Photo</h3>
+        <p class="text-xs text-gray-500 mt-1">A square JPG, PNG, or WebP. Max 5 MB.</p>
+    </div>
 
-                <div>
-                    <label asp-for="Email" class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Email Address</label>
-                    <input asp-for="Email" type="email" required
-                           class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                    <span asp-validation-for="Email" class="text-xs text-rose-500 mt-1 block"></span>
-                    <p class="text-xs text-gray-400 mt-1">Changing your email will change how you sign in.</p>
-                </div>
+    <form asp-action="UploadAvatar" method="post" enctype="multipart/form-data" class="flex items-center gap-2">
+        @Html.AntiForgeryToken()
+        <input type="file" name="avatarFile" accept="image/*" required
+               class="text-xs text-gray-500 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" />
+        <button type="submit"
+                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition shadow-sm whitespace-nowrap">
+            Upload
+        </button>
+    </form>
+</div>
 
-                <div>
-                    <label asp-for="Phone" class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Phone Number</label>
-                    <input asp-for="Phone"
-                           class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                    <span asp-validation-for="Phone" class="text-xs text-rose-500 mt-1 block"></span>
-                </div>
+<form asp-action="Profile" method="post"
+      class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-5">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-sm text-rose-600 font-medium"></div>
 
-                <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                    <a asp-action="Index" class="px-5 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</a>
-                    <button type="submit"
-                            class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
-                        Save Changes
-                    </button>
-                </div>
-            </form>
+    <div>
+        <label asp-for="Name" class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Full Name</label>
+        <input asp-for="Name" required
+               class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+        <span asp-validation-for="Name" class="text-xs text-rose-500 mt-1 block"></span>
+    </div>
+
+    <div>
+        <label asp-for="Email" class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Email Address</label>
+        <input asp-for="Email" type="email" required
+               class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+        <span asp-validation-for="Email" class="text-xs text-rose-500 mt-1 block"></span>
+        <p class="text-xs text-gray-400 mt-1">Changing your email will change how you sign in.</p>
+    </div>
+
+    <div>
+        <label asp-for="Phone" class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Phone Number</label>
+        <input asp-for="Phone"
+               class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+        <span asp-validation-for="Phone" class="text-xs text-rose-500 mt-1 block"></span>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+        <a asp-action="Index" class="px-5 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</a>
+        <button type="submit"
+                class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+            Save Changes
+        </button>
+    </div>
+</form>
         </main>
     </div>
 </div>

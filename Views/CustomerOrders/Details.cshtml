@@ -5,50 +5,42 @@
     ViewData["Title"] = $"Order Details - {Model.OrderId.ToString().Substring(0, 8)}";
 }
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-4">
-        <div>
-            <div class="flex items-center gap-3 flex-wrap">
-                <h1 class="text-3xl font-bold text-gray-900">
-                    Order #@Model.OrderId.ToString().Substring(0, 8)
-                </h1>
-                <span class="px-3 py-1 text-xs font-semibold rounded-full
-                    @(Model.PaymentStatus == PaymentStatus.Success
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-amber-50 text-amber-700 border border-amber-200")">
-                    @Model.PaymentStatus
-                </span>
-            </div>
-            <p class="text-sm text-gray-500 mt-1">
-                Placed on @Model.CreatedAt.ToString("MMMM dd, yyyy @ h:mm tt") via @Model.PaymentMethod
-            </p>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-4">
+    <div>
+        <div class="flex items-center gap-3 flex-wrap">
+            <h1 class="text-3xl font-bold text-gray-900">
+                Order #@Model.OrderId.ToString().Substring(0, 8)
+            </h1>
+            <span class="px-3 py-1 text-xs font-semibold rounded-full
+                @(Model.PaymentStatus == PaymentStatus.Success
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : "bg-amber-50 text-amber-700 border border-amber-200")">
+                @Model.PaymentStatus
+            </span>
         </div>
+        <p class="text-sm text-gray-500 mt-1">
+            Placed on @Model.CreatedAt.ToString("MMMM dd, yyyy @ h:mm tt") via @Model.PaymentMethod
+        </p>
+    </div>
+    @{
+        var canCancel = Model.Status != OrderStatus.Cancelled
+                        && Model.Status != OrderStatus.Completed
+                        && Model.Items.All(i => i.Status == OrderItemStatus.Pending);
+    }
+    <div class="flex items-center gap-3">
+        @if (canCancel)
+        {
+            <a asp-action="Cancel" asp-route-id="@Model.OrderId"
+               class="inline-flex items-center justify-center px-4 py-2 border border-rose-300 hover:border-rose-400 hover:bg-rose-50 rounded-xl text-sm font-semibold text-rose-700 transition w-fit">
+                Cancel Order
+            </a>
+        }
         <a asp-action="Index"
            class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 hover:border-gray-400 rounded-xl text-sm font-semibold text-gray-700 bg-white transition shadow-sm w-fit">
             &larr; Back to Orders
         </a>
-        @{
-            var canCancel = Model.Status != OrderStatus.Cancelled
-                            && Model.Status != OrderStatus.Completed
-                            && Model.Items.All(i => i.Status == OrderItemStatus.Pending);
-        }
-
-        <div class="flex items-center gap-3">
-            @if (canCancel)
-            {
-                <a asp-action="Cancel" asp-route-id="@Model.OrderId"
-                   class="inline-flex items-center justify-center px-4 py-2 border border-rose-300 hover:border-rose-400 hover:bg-rose-50 rounded-xl text-sm font-semibold text-rose-700 transition w-fit">
-                    Cancel Order
-                </a>
-            }
-            <a asp-action="Index"
-               class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 hover:border-gray-400 rounded-xl text-sm font-semibold text-gray-700 bg-white transition shadow-sm w-fit">
-                &larr; Back to Orders
-            </a>
-        </div>
     </div>
+</div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 

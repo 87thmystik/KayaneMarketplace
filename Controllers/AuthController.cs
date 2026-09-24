@@ -17,6 +17,7 @@ namespace Kayane.Controllers
         private readonly IAuthService _authService;
         private readonly IEmailService _emailService;
         private readonly IEmailVerificationService _emailVerification;
+        private readonly IWebHostEnvironment _environment;
         private readonly ILogger<AuthController> _logger;
 
         public AuthController(
@@ -24,12 +25,14 @@ namespace Kayane.Controllers
             IAuthService authService,
             IEmailService emailService,
             IEmailVerificationService emailVerification,
+            IWebHostEnvironment environment,
             ILogger<AuthController> logger)
         {
             _context = context;
             _authService = authService;
             _emailService = emailService;
             _emailVerification = emailVerification;
+            _environment = environment;
             _logger = logger;
         }
 
@@ -83,6 +86,26 @@ namespace Kayane.Controllers
                 return View(model);
             }
 
+            // Process uploads BEFORE the transaction so file errors don't leave orphan DB rows.
+            var logoUpload = await ProcessImageUploadAsync(model.LogoFile, "vendors/logos");
+            if (logoUpload.Error != null)
+            {
+                ModelState.AddModelError("LogoFile", logoUpload.Error);
+                ViewData["ReturnUrl"] = returnUrl;
+                return View(model);
+            }
+
+            var bannerUpload = await ProcessImageUploadAsync(model.BannerFile, "vendors/banners");
+            if (bannerUpload.Error != null)
+            {
+                // Delete the already-uploaded logo so we don't leave orphans
+                if (logoUpload.Path != null) DeleteImageIfExists(logoUpload.Path);
+
+                ModelState.AddModelError("BannerFile", bannerUpload.Error);
+                ViewData["ReturnUrl"] = returnUrl;
+                return View(model);
+            }
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -100,7 +123,6 @@ namespace Kayane.Controllers
                 var passwordHasher = new PasswordHasher<User>();
                 user.PasswordHash = passwordHasher.HashPassword(user, model.Password);
 
-                // Generate verification token BEFORE save so the hash lands with the row.
                 var rawVerificationToken = _emailVerification.GenerateToken(user);
 
                 var vendor = new Vendor
@@ -111,6 +133,8 @@ namespace Kayane.Controllers
                     BusinessDescription = model.BusinessDescription,
                     BusinessAddress = model.BusinessAddress,
                     AccountNumber = model.AccountNumber,
+                    LogoUrl = logoUpload.Path ?? string.Empty,
+                    BannerUrl = bannerUpload.Path,
                     Status = VendorStatus.Pending,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -120,7 +144,6 @@ namespace Kayane.Controllers
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                // Send verification email AFTER commit — email failure shouldn't roll back the registration.
                 var verifyUrl = Url.Action(
                     "VerifyEmail",
                     "Auth",
@@ -137,6 +160,11 @@ namespace Kayane.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
+
+                // Clean up uploaded files since the DB write failed
+                if (logoUpload.Path != null) DeleteImageIfExists(logoUpload.Path);
+                if (bannerUpload.Path != null) DeleteImageIfExists(bannerUpload.Path);
+
                 _logger.LogError(ex, "Error occurred during vendor registration for {Email}", model.Email);
                 ModelState.AddModelError(string.Empty, "An unexpected error occurred. Please try again.");
                 ViewData["ReturnUrl"] = returnUrl;
@@ -144,9 +172,52 @@ namespace Kayane.Controllers
             }
         }
 
+        // ===================== IMAGE UPLOAD HELPERS =====================
+
+        private async Task<(string? Path, string? Error)> ProcessImageUploadAsync(IFormFile? file, string subFolder)
+        {
+            if (file == null || file.Length == 0) return (null, null);
+
+            const long maxBytes = 5 * 1024 * 1024;
+            if (file.Length > maxBytes)
+                return (null, "Image must be smaller than 5 MB.");
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            if (!allowedExtensions.Contains(extension))
+                return (null, "Only .jpg, .jpeg, .png, and .webp images are allowed.");
+
+            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", subFolder);
+            Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueFileName = $"{Guid.NewGuid()}{extension}";
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            await using var stream = new FileStream(filePath, FileMode.Create);
+            await file.CopyToAsync(stream);
+
+            return ($"/uploads/{subFolder}/{uniqueFileName}", null);
+        }
+
+        private void DeleteImageIfExists(string? relativePath)
+        {
+            if (string.IsNullOrWhiteSpace(relativePath)) return;
+            if (!relativePath.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase)) return;
+
+            var fullPath = Path.Combine(
+                _environment.WebRootPath,
+                relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+
+            if (System.IO.File.Exists(fullPath))
+            {
+                try { System.IO.File.Delete(fullPath); }
+                catch { /* best-effort */ }
+            }
+        }
+
         // ===================== EMAIL VERIFICATION =====================
 
-        // GET: /Auth/VerifyEmail
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> VerifyEmail(string token, string email)
@@ -187,7 +258,6 @@ namespace Kayane.Controllers
                 return RedirectToAction(nameof(Login));
             }
 
-            // Mark verified
             user.EmailVerified = true;
             user.EmailVerifiedAt = DateTime.UtcNow;
             user.EmailVerificationTokenHash = null;
@@ -197,8 +267,6 @@ namespace Kayane.Controllers
 
             _logger.LogInformation("Email verified for {Email}", user.Email);
 
-            // Refresh the auth cookie so the EmailVerified claim updates immediately.
-            // Only do this if the same user is currently signed in on this browser.
             if (User.Identity?.IsAuthenticated == true)
             {
                 var currentUserIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -220,7 +288,6 @@ namespace Kayane.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // GET: /Auth/ResendVerification
         [HttpGet]
         [Authorize]
         public IActionResult ResendVerification()
@@ -228,7 +295,6 @@ namespace Kayane.Controllers
             return View();
         }
 
-        // POST: /Auth/ResendVerification
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize]
@@ -307,7 +373,6 @@ namespace Kayane.Controllers
             var passwordHasher = new PasswordHasher<User>();
             user.PasswordHash = passwordHasher.HashPassword(user, model.Password);
 
-            // Generate verification token BEFORE saving so hash is in the DB row.
             var rawVerificationToken = _emailVerification.GenerateToken(user);
 
             _context.Users.Add(user);
@@ -432,11 +497,6 @@ namespace Kayane.Controllers
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl) && returnUrl != "/")
             {
                 return LocalRedirect(returnUrl);
-            }
-
-            if (user.Role == UserRole.Admin)
-            {
-                return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
             }
 
             if (user.Role == UserRole.Vendor)

@@ -7,26 +7,22 @@
 
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Kayane.styles.css" asp-append-version="true" />
-    <style>[x-cloak] { display: none !important; }</style>
-        <script>
-                document.addEventListener('alpine:init', () => {
-                    console.log('Alpine initialized');
-                });
-        </script>
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+            [x-cloak] {
+                display: none !important;
+        }</style>
 
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-</head>
-<body class="bg-gray-50 text-gray-900 antialiased min-h-screen flex flex-col justify-between">
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    </head>
+    <body class="bg-gray-50 text-gray-900 antialiased min-h-screen flex flex-col justify-between">
+
         @if (User.Identity?.IsAuthenticated == true && User.IsInRole("User") && !User.HasClaim("EmailVerified", "true"))
         {
             <div class="bg-amber-500 text-white text-sm py-2.5 px-4">
                 <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
                     <div class="flex items-center gap-2">
                         <span class="text-lg">⚠️</span>
-                        <span>
-                            Please verify your email to place orders.
-                        </span>
+                        <span>Please verify your email to place orders.</span>
                     </div>
                     <a asp-area="" asp-controller="Auth" asp-action="ResendVerification"
                        class="px-3 py-1.5 bg-white text-amber-700 text-xs font-bold rounded-lg hover:bg-amber-50 transition whitespace-nowrap">
@@ -36,265 +32,252 @@
             </div>
         }
 
-    <header x-data="{ mobileMenuOpen: false }" class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="h-16 flex items-center justify-between gap-4">
+        <header x-data="{ mobileMenuOpen: false }" class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+            <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="h-16 flex items-center justify-between gap-4">
 
-                <!-- Left: Logo + desktop nav -->
-                <div class="flex items-center gap-8">
-                    <a class="flex items-center gap-2 group shrink-0" asp-area="" asp-controller="Home" asp-action="Index">
-                        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-lg">
-                            K
-                        </div>
-                        <span class="text-2xl font-black text-gray-900 group-hover:text-indigo-600 transition">Kayane</span>
-                    </a>
-                    <div class="hidden md:flex gap-1">
-                        <a class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                           asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        <a class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                           asp-area="" asp-controller="Shop" asp-action="Index">Shop</a>
-                        <a class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                           asp-area="" asp-controller="Home" asp-action="Privacy">Help</a>
-                    </div>
-                </div>
-
-                <!-- Center: Search -->
-                <div class="hidden md:flex flex-1 max-w-sm">
-                    <form asp-area="" asp-controller="Shop" asp-action="Index" method="get" class="w-full">
-                        <input type="text" name="search" placeholder="Search products..."
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50
-                               focus:ring-2 focus:ring-indigo-500 focus:outline-none focus:border-indigo-500 transition" />
-                    </form>
-                </div>
-
-                <!-- Right: Desktop auth-aware -->
-                <div class="hidden md:flex items-center gap-3 shrink-0">
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
-                               class="text-sm font-medium text-rose-600 hover:text-rose-700 transition">
-                                Admin Panel
-                            </a>
-                        }
-                        @if (User.IsInRole("Vendor"))
-                        {
-                            <a asp-area="Vendor" asp-controller="Vendor" asp-action="Dashboard"
-                               class="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition">
-                                Vendor Dashboard
-                            </a>
-                        }
-                        @if (User.IsInRole("User"))
-                        {
-                            <a asp-area="" asp-controller="Account" asp-action="Notifications"
-                               class="relative text-gray-500 hover:text-indigo-600 transition"
-                               title="Notifications">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                </svg>
-                            </a>
-                            <a asp-area="" asp-controller="Account" asp-action="Index"
-                               class="text-sm font-medium text-gray-600 hover:text-indigo-700 transition">
-                                My Account
-                            </a>
-                        }
-                        <form asp-area="" asp-controller="Auth" asp-action="Logout" method="post" class="inline">
-                            @Html.AntiForgeryToken()
-                            <button type="submit"
-                                    class="px-4 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-sm font-semibold rounded-lg transition shadow-sm">
-                                Logout
-                            </button>
-                        </form>
-                    }
-                    else
-                    {
-                        <a class="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition"
-                           asp-area="" asp-controller="Auth" asp-action="RegisterVendor">Become a Vendor</a>
-                        <a class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition shadow-sm"
-                           asp-area="" asp-controller="Auth" asp-action="Login">Sign In</a>
-                    }
-                </div>
-
-                <!-- Right: Mobile — compact action + hamburger -->
-                <div class="flex md:hidden items-center gap-2 shrink-0">
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        <form asp-area="" asp-controller="Auth" asp-action="Logout" method="post" class="inline">
-                            @Html.AntiForgeryToken()
-                            <button type="submit"
-                                    class="px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold rounded-lg transition">
-                                Logout
-                            </button>
-                        </form>
-                    }
-                    else
-                    {
-                        <a class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition shadow-sm"
-                           asp-area="" asp-controller="Auth" asp-action="Login">
-                            Sign In
+                    <!-- Left: Logo + desktop nav -->
+                    <div class="flex items-center gap-8">
+                        <a class="flex items-center gap-2 group shrink-0" asp-area="" asp-controller="Home" asp-action="Index">
+                            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-lg">
+                                K
+                            </div>
+                            <span class="text-2xl font-black text-gray-900 group-hover:text-indigo-600 transition">Kayane</span>
                         </a>
-                    }
-                    <button type="button"
+                        <div class="hidden md:flex gap-1">
+                            <a class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                               asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                               asp-area="" asp-controller="Shop" asp-action="Index">Shop</a>
+                            <a class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                               asp-area="" asp-controller="Home" asp-action="Privacy">Help</a>
+                        </div>
+                    </div>
+
+                    <!-- Center: Search -->
+                    <div class="hidden md:flex flex-1 max-w-sm">
+                        <form asp-area="" asp-controller="Shop" asp-action="Index" method="get" class="w-full">
+                            <input type="text" name="search" placeholder="Search products..."
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50
+                            focus:ring-2 focus:ring-indigo-500 focus:outline-none focus:border-indigo-500 transition" />
+                        </form>
+                    </div>
+
+                    <!-- Right: Desktop auth-aware -->
+                    <div class="hidden md:flex items-center gap-3 shrink-0">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
+                                   class="text-sm font-medium text-rose-600 hover:text-rose-700 transition">
+                                    Admin Panel
+                                </a>
+                            }
+                            @if (User.IsInRole("Vendor"))
+                            {
+                                <a asp-area="Vendor" asp-controller="Vendor" asp-action="Dashboard"
+                                   class="flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition">
+                                    @await Component.InvokeAsync("VendorLogo")
+                                    <span>Vendor Dashboard</span>
+                                </a>
+                            }
+                            @if (User.IsInRole("User"))
+                            {
+                                <a asp-area="" asp-controller="Account" asp-action="Notifications"
+                                   class="relative text-gray-500 hover:text-indigo-600 transition"
+                                   title="Notifications">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                </a>
+                                <a asp-area="" asp-controller="Account" asp-action="Index"
+                                   class="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-indigo-700 transition">
+                                    @await Component.InvokeAsync("UserAvatar")
+                                    <span>My Account</span>
+                                </a>
+                            }
+                            <form asp-area="" asp-controller="Auth" asp-action="Logout" method="post" class="inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="px-4 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-sm font-semibold rounded-lg transition shadow-sm">
+                                    Logout
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition shadow-sm"
+                               asp-area="" asp-controller="Auth" asp-action="Login">Sign In</a>
+                        }
+                    </div>
+
+                    <!-- Right: Mobile — compact action + hamburger -->
+                    <div class="flex md:hidden items-center gap-2 shrink-0">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <form asp-area="" asp-controller="Auth" asp-action="Logout" method="post" class="inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold rounded-lg transition">
+                                    Logout
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition shadow-sm"
+                               asp-area="" asp-controller="Auth" asp-action="Login">
+                                Sign In
+                            </a>
+                        }
+                        <button type="button"
                             @@click="mobileMenuOpen = !mobileMenuOpen"
-                            class="p-2 rounded-lg text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-                            aria-label="Toggle menu">
-                        <svg x-show="!mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                        <svg x-show="mobileMenuOpen" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
+                                class="p-2 rounded-lg text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                                aria-label="Toggle menu">
+                            <svg x-show="!mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                            <svg x-show="mobileMenuOpen" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Mobile menu drawer -->
-            <div x-show="mobileMenuOpen"
-                 x-cloak
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 -translate-y-2"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-150"
-                 x-transition:leave-start="opacity-100 translate-y-0"
-                 x-transition:leave-end="opacity-0 -translate-y-2"
-                 class="md:hidden border-t border-gray-200 py-3 space-y-1">
+                <!-- Mobile menu drawer -->
+                <div x-show="mobileMenuOpen"
+                     x-cloak
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -translate-y-2"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-2"
+                     class="md:hidden border-t border-gray-200 py-3 space-y-1">
 
-                <form asp-area="" asp-controller="Shop" asp-action="Index" method="get" class="px-1 pb-2">
-                    <input type="text" name="search" placeholder="Search products..."
-                           class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-gray-50
-                           focus:ring-2 focus:ring-indigo-500 focus:outline-none focus:border-indigo-500 transition" />
-                </form>
+                    <form asp-area="" asp-controller="Shop" asp-action="Index" method="get" class="px-1 pb-2">
+                        <input type="text" name="search" placeholder="Search products..."
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-gray-50
+                        focus:ring-2 focus:ring-indigo-500 focus:outline-none focus:border-indigo-500 transition" />
+                    </form>
 
-                <a asp-area="" asp-controller="Home" asp-action="Index"
-                   class="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition">
-                    Home
-                </a>
-                <a asp-area="" asp-controller="Shop" asp-action="Index"
-                   class="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition">
-                    Shop
-                </a>
-                <a asp-area="" asp-controller="Home" asp-action="Privacy"
-                   class="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition">
-                    Help
-                </a>
+                    <a asp-area="" asp-controller="Home" asp-action="Index"
+                       class="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition">
+                        Home
+                    </a>
+                    <a asp-area="" asp-controller="Shop" asp-action="Index"
+                       class="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition">
+                        Shop
+                    </a>
+                    <a asp-area="" asp-controller="Home" asp-action="Privacy"
+                       class="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition">
+                        Help
+                    </a>
 
-                <div class="border-t border-gray-100 pt-2 mt-2 space-y-1">
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        @if (User.IsInRole("Admin"))
+                    <div class="border-t border-gray-100 pt-2 mt-2 space-y-1">
+                        @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
-                               class="block px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition">
-                                Admin Panel
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"
+                                   class="block px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                                    Admin Panel
+                                </a>
+                            }
+                            @if (User.IsInRole("Vendor"))
+                            {
+                                <a asp-area="Vendor" asp-controller="Vendor" asp-action="Dashboard"
+                                   class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 rounded-lg transition">
+                                    @await Component.InvokeAsync("VendorLogo")
+                                    <span>Vendor Dashboard</span>
+                                </a>
+                            }
+                            @if (User.IsInRole("User"))
+                            {
+                                <a asp-area="" asp-controller="Account" asp-action="Index"
+                                   class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                                    @await Component.InvokeAsync("UserAvatar")
+                                    <span>My Account</span>
+                                </a>
+                            }
+                        }
+                        else
+                        {
+                            <a asp-area="" asp-controller="Auth" asp-action="Register"
+                               class="block px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                                Create an Account
                             </a>
                         }
-                        @if (User.IsInRole("Vendor"))
-                        {
-                            <a asp-area="Vendor" asp-controller="Vendor" asp-action="Dashboard"
-                               class="block px-4 py-2.5 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 rounded-lg transition">
-                                Vendor Dashboard
-                            </a>
-                        }
-                        @if (User.IsInRole("User"))
-                        {
-                            <a asp-area="" asp-controller="Account" asp-action="Index"
-                               class="block px-4 py-2.5 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
-                                My Account
-                            </a>
-                        }
-                    }
-                    else
-                    {
-                        <a asp-area="" asp-controller="Auth" asp-action="RegisterVendor"
-                           class="block px-4 py-2.5 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 rounded-lg transition">
-                            Become a Vendor
-                        </a>
-                        <a asp-area="" asp-controller="Auth" asp-action="Register"
-                           class="block px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-lg transition">
-                            Create an Account
-                        </a>
-                    }
+                    </div>
                 </div>
-            </div>
-        </nav>
-    </header>
+            </nav>
+        </header>
 
-    <main role="main" class="grow">
-        @RenderBody()
-    </main>
+        <main role="main" class="grow">
+            @RenderBody()
+        </main>
 
-    <footer class="bg-linear-to-b from-slate-900 to-slate-950 text-gray-300 mt-16 pt-16 pb-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 pb-12 mb-12 border-b border-slate-800">
-                <div class="md:col-span-2">
-                    <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-10 h-10 bg-linear-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-black text-lg">
-                            K
+        <footer class="bg-linear-to-b from-slate-900 to-slate-950 text-gray-300 mt-16 pt-16 pb-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 pb-12 mb-12 border-b border-slate-800">
+                    <div class="md:col-span-2">
+                        <div class="flex items-center space-x-2 mb-4">
+                            <div class="w-10 h-10 bg-linear-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-black text-lg">
+                                K
+                            </div>
+                            <span class="text-2xl font-black text-white">Kayane</span>
                         </div>
-                        <span class="text-2xl font-black text-white">Kayane</span>
+                        <p class="text-gray-400 leading-relaxed mb-6">Your trusted multi-vendor marketplace connecting quality products with discerning shoppers.</p>
+                        <div class="flex space-x-4">
+                            <a href="#" class="w-10 h-10 bg-slate-800 hover:bg-indigo-600 rounded-lg flex items-center justify-center transition text-white">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8.29 20v-7.21H5.5V9.25h2.79V7.25c0-2.89 1.96-4.75 4.74-4.75 1.42 0 2.65.11 3.01.15v3.03h-2.11c-1.37 0-1.46.65-1.46 1.59v2.08h2.92l-.6 3.54h-2.32V20z" /></svg>
+                            </a>
+                            <a href="#" class="w-10 h-10 bg-slate-800 hover:bg-indigo-600 rounded-lg flex items-center justify-center transition text-white">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.633 7.997c.013.175.013.349.013.523 0 5.325-4.053 11.461-11.46 11.461-2.282 0-4.402-.661-6.186-1.809.324.037.636.05.973.05a8.07 8.07 0 005.001-1.729 4.032 4.032 0 01-3.757-2.793c.249.037.499.062.761.062.361 0 .724-.05 1.061-.171a4.03 4.03 0 01-3.232-3.953v-.05c.537.299 1.159.486 1.616.511a4.029 4.029 0 01-1.798-3.354c0-.748.199-1.434.548-2.032a11.455 11.455 0 008.315 4.202c-.067-.313-.107-.63-.107-.951 0-4.895 3.949-8.864 8.833-8.864 2.54 0 4.831 1.045 6.442 2.738a7.995 7.995 0 002.519-.973 4.032 4.032 0 01-1.771 2.234 8.034 8.034 0 002.281-.623 8.62 8.62 0 01-1.979 2.049z" /></svg>
+                            </a>
+                            <a href="#" class="w-10 h-10 bg-slate-800 hover:bg-indigo-600 rounded-lg flex items-center justify-center transition text-white">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0m4.441 16.892c-2.102.144-6.784.144-8.883 0C5.282 16.736 5.017 15.622 5 12c.017-3.629.285-4.736 2.558-4.892 2.099-.144 6.782-.144 8.883 0C18.718 7.264 18.982 8.378 19 12c-.018 3.629-.285 4.736-2.559 4.892zM9.5 15.5v-7l6 3.5-6 3.5z" /></svg>
+                            </a>
+                        </div>
                     </div>
-                    <p class="text-gray-400 leading-relaxed mb-6">Your trusted multi-vendor marketplace connecting quality products with discerning shoppers. Shop verified vendors or grow your business with us.</p>
-                    <div class="flex space-x-4">
-                        <a href="#" class="w-10 h-10 bg-slate-800 hover:bg-indigo-600 rounded-lg flex items-center justify-center transition text-white">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8.29 20v-7.21H5.5V9.25h2.79V7.25c0-2.89 1.96-4.75 4.74-4.75 1.42 0 2.65.11 3.01.15v3.03h-2.11c-1.37 0-1.46.65-1.46 1.59v2.08h2.92l-.6 3.54h-2.32V20z" /></svg>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-slate-800 hover:bg-indigo-600 rounded-lg flex items-center justify-center transition text-white">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.633 7.997c.013.175.013.349.013.523 0 5.325-4.053 11.461-11.46 11.461-2.282 0-4.402-.661-6.186-1.809.324.037.636.05.973.05a8.07 8.07 0 005.001-1.729 4.032 4.032 0 01-3.757-2.793c.249.037.499.062.761.062.361 0 .724-.05 1.061-.171a4.03 4.03 0 01-3.232-3.953v-.05c.537.299 1.159.486 1.616.511a4.029 4.029 0 01-1.798-3.354c0-.748.199-1.434.548-2.032a11.455 11.455 0 008.315 4.202c-.067-.313-.107-.63-.107-.951 0-4.895 3.949-8.864 8.833-8.864 2.54 0 4.831 1.045 6.442 2.738a7.995 7.995 0 002.519-.973 4.032 4.032 0 01-1.771 2.234 8.034 8.034 0 002.281-.623 8.62 8.62 0 01-1.979 2.049z" /></svg>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-slate-800 hover:bg-indigo-600 rounded-lg flex items-center justify-center transition text-white">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0m4.441 16.892c-2.102.144-6.784.144-8.883 0C5.282 16.736 5.017 15.622 5 12c.017-3.629.285-4.736 2.558-4.892 2.099-.144 6.782-.144 8.883 0C18.718 7.264 18.982 8.378 19 12c-.018 3.629-.285 4.736-2.559 4.892zM9.5 15.5v-7l6 3.5-6 3.5z" /></svg>
-                        </a>
+
+                    <div>
+                        <h4 class="text-white font-bold mb-4">Shop</h4>
+                        <ul class="space-y-2">
+                            <li><a asp-area="" asp-controller="Shop" asp-action="Index" class="text-gray-400 hover:text-indigo-400 transition text-sm">Browse Products</a></li>
+                            <li><a asp-area="" asp-controller="Cart" asp-action="Index" class="text-gray-400 hover:text-indigo-400 transition text-sm">Shopping Cart</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-white font-bold mb-4">For Vendors</h4>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Seller Tools</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Seller Academy</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Pricing</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-white font-bold mb-4">Support</h4>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Help Center</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Contact Us</a></li>
+                            <li><a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-gray-400 hover:text-indigo-400 transition text-sm">Privacy Policy</a></li>
+                        </ul>
                     </div>
                 </div>
 
-                <div>
-                    <h4 class="text-white font-bold mb-4">Shop</h4>
-                    <ul class="space-y-2">
-                        <li><a asp-area="" asp-controller="Shop" asp-action="Index" class="text-gray-400 hover:text-indigo-400 transition text-sm">Browse Products</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Best Sellers</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">New Arrivals</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Sale Items</a></li>
-                        <li><a asp-area="" asp-controller="Cart" asp-action="Index" class="text-gray-400 hover:text-indigo-400 transition text-sm">Shopping Cart</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h4 class="text-white font-bold mb-4">For Vendors</h4>
-                    <ul class="space-y-2">
-                        <li><a asp-area="" asp-controller="Auth" asp-action="RegisterVendor" class="text-gray-400 hover:text-indigo-400 transition text-sm">Become a Vendor</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Seller Tools</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Seller Academy</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Pricing</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h4 class="text-white font-bold mb-4">Support</h4>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Help Center</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Contact Us</a></li>
-                        <li><a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-gray-400 hover:text-indigo-400 transition text-sm">Privacy Policy</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Terms of Service</a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-indigo-400 transition text-sm">Security</a></li>
-                    </ul>
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
+                    <p>&copy; 2026 Kayane Marketplace. All rights reserved.</p>
                 </div>
             </div>
+        </footer>
 
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-                <p>&copy; 2026 Kayane Marketplace. All rights reserved.</p>
-                <div class="flex space-x-6">
-                    <a href="#" class="hover:text-indigo-400 transition">System Status</a>
-                    <a href="#" class="hover:text-indigo-400 transition">Accessibility</a>
-                    <a href="#" class="hover:text-indigo-400 transition">Cookie Settings</a>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
-</body>
+        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script src="~/js/site.js" asp-append-version="true"></script>
+        @await RenderSectionAsync("Scripts", required: false)
+    </body>
 </html>

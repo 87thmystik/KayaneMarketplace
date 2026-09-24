@@ -102,7 +102,22 @@
                         @foreach (var vendor in Model.PendingVendors)
                         {
                             <tr class="hover:bg-gray-50/80 transition">
-                                <td class="px-6 py-4 font-bold text-gray-900">@vendor.BusinessName</td>
+                               <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        @if (!string.IsNullOrEmpty(vendor.LogoUrl))
+                                        {
+                                            <img src="@vendor.LogoUrl" alt="@vendor.BusinessName"
+                                                 class="w-10 h-10 rounded-lg object-cover border border-gray-200 bg-white shrink-0" />
+                                        }
+                                        else
+                                        {
+                                            <div class="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                                                @(string.IsNullOrWhiteSpace(vendor.BusinessName) ? "?" : vendor.BusinessName.Trim()[..1].ToUpperInvariant())
+                                            </div>
+                                        }
+                                        <span class="font-bold text-gray-900 truncate">@vendor.BusinessName</span>
+                                    </div>
+                                </td>
                                 <td class="px-6 py-4 text-xs text-gray-500">
                                     @vendor.BusinessEmail<br />@vendor.BusinessPhone
                                 </td>

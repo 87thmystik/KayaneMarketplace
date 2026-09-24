@@ -5,7 +5,7 @@
     ViewData["Title"] = "Product Moderation";
 }
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6" x-data="bulkTable()">
 
     <!-- Header -->
     <div class="border-b border-gray-200 pb-6">
@@ -19,24 +19,65 @@
             @TempData["SuccessMessage"]
         </div>
     }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm font-medium">
+            @TempData["ErrorMessage"]
+        </div>
+    }
 
     <!-- Status tabs -->
     <div class="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
-        <a asp-action="Index" asp-route-status="@ProductStatus.Pending"
+        <a asp-action="Products" asp-route-statusFilter="@ProductStatus.Pending"
            class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 @(Model.CurrentFilter == ProductStatus.Pending ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")">
             Pending
             <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-800">@Model.PendingCount</span>
         </a>
-        <a asp-action="Index" asp-route-status="@ProductStatus.Approved"
+        <a asp-action="Products" asp-route-statusFilter="@ProductStatus.Approved"
            class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 @(Model.CurrentFilter == ProductStatus.Approved ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")">
             Approved
             <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-800">@Model.ApprovedCount</span>
         </a>
-        <a asp-action="Index" asp-route-status="@ProductStatus.Rejected"
+        <a asp-action="Products" asp-route-statusFilter="@ProductStatus.Rejected"
            class="px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-1.5 @(Model.CurrentFilter == ProductStatus.Rejected ? "bg-indigo-600 text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200")">
             Rejected
             <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-800">@Model.RejectedCount</span>
         </a>
+    </div>
+
+    <!-- Bulk action bar -->
+    <div x-show="selectedIds.length > 0" x-cloak
+         class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-sm"
+                 x-text="selectedIds.length"></div>
+            <span class="text-sm font-semibold text-indigo-900">
+                <span x-text="selectedIds.length === 1 ? 'product' : 'products'"></span> selected
+            </span>
+            <button type="button" @@click="clearAll()"
+                    class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline">
+                Clear selection
+            </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <form method="post" asp-action="BulkApproveProducts" class="inline">
+                @Html.AntiForgeryToken()
+                <template x-for="id in selectedIds" :key="id">
+                    <input type="hidden" name="productIds" :value="id" />
+                </template>
+                <button type="submit"
+                        onclick="return confirm('Approve all selected products?')"
+                        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-sm">
+                    ✓ Approve Selected
+                </button>
+            </form>
+
+            <button type="button" @@click="rejectModalOpen = true"
+                    class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition shadow-sm">
+                ✕ Reject Selected
+            </button>
+        </div>
     </div>
 
     <!-- Table -->
@@ -53,6 +94,10 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 text-xs uppercase font-semibold text-gray-500 border-b border-gray-200">
+                            <th class="px-4 py-3.5 w-10">
+                                <input type="checkbox" @@change="toggleAll($event)"
+                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer" />
+                            </th>
                             <th class="px-6 py-3.5">Product</th>
                             <th class="px-6 py-3.5">Vendor</th>
                             <th class="px-6 py-3.5">Category</th>
@@ -66,6 +111,11 @@
                         @foreach (var item in Model.Products)
                         {
                             <tr class="hover:bg-gray-50/80 transition">
+                                <td class="px-4 py-4">
+                                    <input type="checkbox" value="@item.ProductId"
+                                           x-model="selectedIds"
+                                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer" />
+                                </td>
                                 <td class="px-6 py-4">
                                     <div class="font-bold text-gray-900">@item.Name</div>
                                     <div class="text-xs text-gray-500 line-clamp-1 max-w-xs mt-0.5">@item.Description</div>
@@ -95,7 +145,7 @@
                                         @if (item.Status == ProductStatus.Pending || item.Status == ProductStatus.Approved)
                                         {
                                             <button type="button"
-                                                @@click="$dispatch('open-reject-modal', { id: '@item.ProductId', name: @System.Text.Json.JsonSerializer.Serialize(item.Name) })"
+                                                    @@click="openRejectModal('@item.ProductId', @System.Text.Json.JsonSerializer.Serialize(item.Name))"
                                                     class="px-3 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-semibold rounded-lg transition">
                                                 Reject
                                             </button>
@@ -109,47 +159,108 @@
             </div>
         }
     </div>
-</div>
 
-<!-- Reject modal (Alpine) -->
-<div x-data="{ open: false, productId: '', productName: '' }"
-    @@open-reject-modal.window="open = true; productId = $event.detail.id; productName = $event.detail.name"
-     x-show="open"
-     x-cloak
-     class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <!-- Bulk Reject Modal -->
+    <div x-show="rejectModalOpen" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" @@click="rejectModalOpen = false"></div>
 
-    <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" @@click="open = false"></div>
-
-    <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
-        <div class="flex items-start justify-between gap-4">
-            <div>
-                <h3 class="text-lg font-bold text-gray-900">Reject Product</h3>
-                <p class="text-xs text-gray-500 mt-0.5" x-text="productName"></p>
+        <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-5">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Reject Selected Products</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">
+                        <span x-text="selectedIds.length"></span> product(s) will be rejected with the same reason.
+                    </p>
+                </div>
+                <button type="button" @@click="rejectModalOpen = false"
+                        class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
             </div>
-            <button type="button" @@click="open = false" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
+
+            <form method="post" asp-action="BulkRejectProducts" class="space-y-4">
+                @Html.AntiForgeryToken()
+                <template x-for="id in selectedIds" :key="id">
+                    <input type="hidden" name="productIds" :value="id" />
+                </template>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Reason for Rejection</label>
+                    <textarea name="rejectionReason" rows="3" required minlength="3"
+                              placeholder="This reason will be applied to all selected products..."
+                              class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                    <button type="button" @@click="rejectModalOpen = false"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            onclick="return confirm('Reject all selected products?')"
+                            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl transition shadow-sm">
+                        Confirm Rejection
+                    </button>
+                </div>
+            </form>
         </div>
-
-        <form asp-action="Reject" method="post" class="space-y-4">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="productId" :value="productId" />
-
-            <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Reason for Rejection</label>
-                <textarea name="rejectionReason" rows="3" required
-                          placeholder="Explain why this product is being rejected..."
-                          class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none"></textarea>
-            </div>
-
-            <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
-                <button type="button" @@click="open = false"
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition">
-                    Cancel
-                </button>
-                <button type="submit"
-                        class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl transition shadow-sm">
-                    Confirm Rejection
-                </button>
-            </div>
-        </form>
     </div>
 </div>
+
+<script>
+    function bulkTable() {
+        return {
+            selectedIds: [],
+            rejectModalOpen: false,
+
+            toggleAll(event) {
+                const checked = event.target.checked;
+                const checkboxes = document.querySelectorAll('input[type="checkbox"][value]');
+                if (checked) {
+                    this.selectedIds = Array.from(checkboxes).map(cb => cb.value);
+                } else {
+                    this.selectedIds = [];
+                }
+            },
+
+            clearAll() {
+                this.selectedIds = [];
+                document.querySelectorAll('input[type="checkbox"][value]').forEach(cb => cb.checked = false);
+            },
+
+            openRejectModal(productId, productName) {
+                // For single-item reject — use the existing UpdateProductStatus form
+                // We'll just submit a form programmatically with a reason prompt
+                const reason = prompt('Reason for rejecting "' + productName + '":');
+                if (!reason || reason.trim().length < 3) return;
+
+                const form = document.createElement('form');
+                form.method = 'post';
+                form.action = '@Url.Action("Reject", "Dashboard", new { area = "Admin" })';
+
+                const token = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (token) {
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = token.value;
+                    form.appendChild(tokenInput);
+                }
+
+                const pidInput = document.createElement('input');
+                pidInput.type = 'hidden';
+                pidInput.name = 'productId';
+                pidInput.value = productId;
+                form.appendChild(pidInput);
+
+                const reasonInput = document.createElement('input');
+                reasonInput.type = 'hidden';
+                reasonInput.name = 'rejectionReason';
+                reasonInput.value = reason.trim();
+                form.appendChild(reasonInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        };
+    }
+</script>

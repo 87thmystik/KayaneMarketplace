@@ -13,11 +13,16 @@ namespace Kayane.Controllers;
 public class AccountController : Controller
 {
     private readonly KayaneDb _context;
+    private readonly IWebHostEnvironment _environment;
     private readonly ILogger<AccountController> _logger;
 
-    public AccountController(KayaneDb context, ILogger<AccountController> logger)
+    public AccountController(
+        KayaneDb context,
+        IWebHostEnvironment environment,
+        ILogger<AccountController> logger)
     {
         _context = context;
+        _environment = environment;
         _logger = logger;
     }
 
@@ -70,6 +75,65 @@ public class AccountController : Controller
 
         return View(vm);
     }
+    // POST: /Account/UploadAvatar
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UploadAvatar(IFormFile? avatarFile)
+    {
+        if (CurrentUserId is not { } userId) return Challenge();
+
+        if (avatarFile == null || avatarFile.Length == 0)
+        {
+            TempData["ErrorMessage"] = "Please choose an image.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        const long maxBytes = 5 * 1024 * 1024;
+        if (avatarFile.Length > maxBytes)
+        {
+            TempData["ErrorMessage"] = "Image must be smaller than 5 MB.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+        var extension = Path.GetExtension(avatarFile.FileName).ToLowerInvariant();
+        if (!allowedExtensions.Contains(extension))
+        {
+            TempData["ErrorMessage"] = "Only .jpg, .jpeg, .png, and .webp images are allowed.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+        if (user == null) return NotFound();
+
+        var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "avatars");
+        Directory.CreateDirectory(uploadsFolder);
+
+        var uniqueFileName = $"{Guid.NewGuid()}{extension}";
+        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+        await using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await avatarFile.CopyToAsync(stream);
+        }
+
+        // Delete old avatar if it exists and is under /uploads/
+        if (!string.IsNullOrWhiteSpace(user.AvatarUrl) &&
+            user.AvatarUrl.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+        {
+            var oldPath = Path.Combine(
+                _environment.WebRootPath,
+                user.AvatarUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            try { if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath); }
+            catch { /* best-effort */ }
+        }
+
+        user.AvatarUrl = $"/uploads/avatars/{uniqueFileName}";
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Avatar updated.";
+        return RedirectToAction(nameof(Profile));
+    }
 
     // GET: /Account/Profile
     [HttpGet]
@@ -83,7 +147,8 @@ public class AccountController : Controller
         {
             Name = user.Name,
             Email = user.Email,
-            Phone = user.Phone
+            Phone = user.Phone,
+            AvatarUrl = user.AvatarUrl
         });
     }
 

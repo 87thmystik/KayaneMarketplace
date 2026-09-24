@@ -1,0 +1,7 @@
+﻿@model dynamic
+
+@if (!string.IsNullOrEmpty(Model.AvatarUrl))
+{
+    <img src="@Model.AvatarUrl" alt="@Model.Name"
+         class="w-7 h-7 rounded-full object-cover border border-gray-200" />
+}

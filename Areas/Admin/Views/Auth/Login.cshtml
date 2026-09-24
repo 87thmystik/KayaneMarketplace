@@ -43,10 +43,16 @@
                 <span asp-validation-for="Password" class="text-rose-400 text-xs mt-1 block"></span>
             </div>
 
-            <div class="flex items-center gap-2">
-                <input asp-for="RememberMe" type="checkbox"
-                       class="h-4 w-4 text-rose-600 focus:ring-rose-500 bg-slate-900 border-slate-600 rounded" />
-                <label asp-for="RememberMe" class="text-xs text-slate-300">Keep me signed in on this device</label>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <input asp-for="RememberMe" type="checkbox"
+                           class="h-4 w-4 text-rose-600 focus:ring-rose-500 bg-slate-900 border-slate-600 rounded" />
+                    <label asp-for="RememberMe" class="text-xs text-slate-300">Keep me signed in on this device</label>
+                </div>
+                <a asp-area="" asp-controller="Auth" asp-action="ForgotPassword"
+                   class="text-xs font-semibold text-rose-400 hover:text-rose-300 underline">
+                    Forgot password?
+                </a>
             </div>
 
             <button type="submit"

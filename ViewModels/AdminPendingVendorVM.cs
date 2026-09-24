@@ -8,5 +8,6 @@
         public string BusinessEmail { get; set; } = string.Empty;
         public string BusinessAddress { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+        public string? LogoUrl { get; set; }
     }
 }

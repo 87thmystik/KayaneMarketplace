@@ -7,7 +7,6 @@
 <div class="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-xl w-full space-y-8 bg-white border border-gray-200 p-8 sm:p-10 rounded-3xl shadow-sm">
 
-        <!-- Header -->
         <div class="text-center space-y-2">
             <h1 class="text-3xl font-extrabold text-gray-900">Become a Seller</h1>
             <p class="text-sm text-gray-500">
@@ -15,7 +14,7 @@
             </p>
         </div>
 
-        <form asp-action="RegisterVendor" method="post" class="space-y-6">
+        <form asp-action="RegisterVendor" method="post" enctype="multipart/form-data" class="space-y-6">
             @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-xs font-semibold text-red-600 bg-red-50 p-3 rounded-xl border border-red-100"></div>
 
@@ -75,6 +74,25 @@
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                     <span asp-validation-for="BusinessAddress" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
+
+                <!-- NEW: Store Logo + Banner -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label asp-for="LogoFile" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1"></label>
+                        <input asp-for="LogoFile" type="file" accept="image/*"
+                               class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" />
+                        <p class="text-[10px] text-gray-400 mt-1">Square image, 200-800px ideal</p>
+                        <span asp-validation-for="LogoFile" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+
+                    <div>
+                        <label asp-for="BannerFile" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1"></label>
+                        <input asp-for="BannerFile" type="file" accept="image/*"
+                               class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" />
+                        <p class="text-[10px] text-gray-400 mt-1">Wide image, 1200x400 ideal</p>
+                        <span asp-validation-for="BannerFile" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
             </div>
 
             <!-- 3. Credentials -->
@@ -111,3 +129,7 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

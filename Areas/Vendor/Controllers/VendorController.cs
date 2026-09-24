@@ -574,7 +574,7 @@ public class VendorController : Controller
     [HttpPost]
     [ApprovedVendor]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditProfile(Vendor model)
+    public async Task<IActionResult> EditProfile(Vendor model, IFormFile? LogoFile)
     {
         var vendor = await _context.Vendors
             .FirstOrDefaultAsync(v => v.VendorId == CurrentVendor.VendorId);
@@ -584,6 +584,23 @@ public class VendorController : Controller
         if (!ModelState.IsValid)
         {
             return View(model);
+        }
+
+        // Handle logo upload
+        if (LogoFile != null && LogoFile.Length > 0)
+        {
+            var upload = await ProcessImageUploadAsync(LogoFile, "vendors/logos");
+            if (upload.ErrorMessage != null)
+            {
+                ModelState.AddModelError(nameof(LogoFile), upload.ErrorMessage);
+                return View(model);
+            }
+
+            if (upload.RelativePath != null)
+            {
+                DeleteImageIfExists(vendor.LogoUrl);
+                vendor.LogoUrl = upload.RelativePath;
+            }
         }
 
         vendor.BusinessName = model.BusinessName;

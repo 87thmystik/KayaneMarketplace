@@ -1,65 +1,116 @@
 ﻿@model Kayane.ViewModels.AdminVendorListVM
 @using Kayane.Models
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
 @{
+    ViewData["Title"] = "Vendor Management";
     var currentUrl = Context.Request.Path + Context.Request.QueryString;
+
+    string TabClass(VendorStatus? status) =>
+        Model.SelectedStatus == status
+            ? "bg-indigo-600 text-white shadow-sm"
+            : "bg-gray-100 text-gray-600 hover:bg-gray-200";
 }
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6" x-data="vendorBulkTable()">
+
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
-        <div>
-            <h1 class="text-3xl font-extrabold text-gray-900">Vendor Management</h1>
-            <p class="text-sm text-gray-500 mt-1">Filter, review, approve, or suspend vendor storefronts on Kayane.</p>
-        </div>
-        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
-            ← Back to Admin Dashboard
-        </a>
+    <div class="border-b border-gray-200 pb-6">
+        <h1 class="text-3xl font-extrabold text-gray-900">Vendor Management</h1>
+        <p class="text-sm text-gray-500 mt-1">Filter, review, approve, or suspend vendor storefronts.</p>
     </div>
 
-    <!-- Search & Filter Controls -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm font-medium">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm font-medium">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Filters -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <!-- Filter Tabs -->
         <div class="flex items-center gap-2 overflow-x-auto pb-1">
-            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" asp-route-searchKeyword="@Model.SearchKeyword"
-               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @(Model.SelectedStatus == null ? "bg-indigo-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100")">
+            <a asp-action="Vendors" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @TabClass(null)">
                 All Statuses
             </a>
-            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" asp-route-statusFilter="@VendorStatus.Pending" asp-route-searchKeyword="@Model.SearchKeyword"
-               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @(Model.SelectedStatus == VendorStatus.Pending ? "bg-indigo-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100")">
+            <a asp-action="Vendors" asp-route-statusFilter="@VendorStatus.Pending" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @TabClass(VendorStatus.Pending)">
                 Pending
             </a>
-            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" asp-route-statusFilter="@VendorStatus.Active" asp-route-searchKeyword="@Model.SearchKeyword"
-               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @(Model.SelectedStatus == VendorStatus.Active ? "bg-indigo-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100")">
+            <a asp-action="Vendors" asp-route-statusFilter="@VendorStatus.Active" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @TabClass(VendorStatus.Active)">
                 Active
             </a>
-            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" asp-route-statusFilter="@VendorStatus.Suspended" asp-route-searchKeyword="@Model.SearchKeyword"
-               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @(Model.SelectedStatus == VendorStatus.Suspended ? "bg-indigo-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100")">
+            <a asp-action="Vendors" asp-route-statusFilter="@VendorStatus.Suspended" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @TabClass(VendorStatus.Suspended)">
                 Suspended
             </a>
-            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" asp-route-statusFilter="@VendorStatus.Rejected" asp-route-searchKeyword="@Model.SearchKeyword"
-               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @(Model.SelectedStatus == VendorStatus.Rejected ? "bg-indigo-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100")">
+            <a asp-action="Vendors" asp-route-statusFilter="@VendorStatus.Rejected" asp-route-searchKeyword="@Model.SearchKeyword"
+               class="px-4 py-2 text-xs font-bold rounded-xl transition whitespace-nowrap @TabClass(VendorStatus.Rejected)">
                 Rejected
             </a>
         </div>
 
-        <!-- Search Input -->
-        <form method="get" asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" class="flex items-center gap-2">
+        <form method="get" asp-action="Vendors" class="flex items-center gap-2">
             @if (Model.SelectedStatus.HasValue)
             {
                 <input type="hidden" name="statusFilter" value="@Model.SelectedStatus" />
             }
-            <input type="text" name="searchKeyword" value="@Model.SearchKeyword" placeholder="Search business or owner..."
+            <input type="text" name="searchKeyword" value="@Model.SearchKeyword"
+                   placeholder="Search business or owner..."
                    class="px-3.5 py-2 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none w-64" />
             <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition">
                 Search
             </button>
-            @if (!string.IsNullOrWhiteSpace(Model.SearchKeyword))
-            {
-                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors" asp-route-statusFilter="@Model.SelectedStatus" class="text-xs text-gray-500 hover:text-gray-700 underline">Clear</a>
-            }
         </form>
+    </div>
+
+    <!-- Bulk action bar -->
+    <div x-show="selectedIds.length > 0" x-cloak
+         class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-sm"
+                 x-text="selectedIds.length"></div>
+            <span class="text-sm font-semibold text-indigo-900">
+                <span x-text="selectedIds.length === 1 ? 'vendor' : 'vendors'"></span> selected
+            </span>
+            <button type="button" @@click="clearAll()"
+                    class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline">
+                Clear selection
+            </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <form method="post" asp-action="BulkApproveVendors" class="inline">
+                @Html.AntiForgeryToken()
+                <template x-for="id in selectedIds" :key="id">
+                    <input type="hidden" name="vendorIds" :value="id" />
+                </template>
+                <button type="submit"
+                        onclick="return confirm('Activate all selected vendors?')"
+                        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-sm">
+                    ✓ Activate Selected
+                </button>
+            </form>
+
+            <form method="post" asp-action="BulkRejectVendors" class="inline">
+                @Html.AntiForgeryToken()
+                <template x-for="id in selectedIds" :key="id">
+                    <input type="hidden" name="vendorIds" :value="id" />
+                </template>
+                <button type="submit"
+                        onclick="return confirm('Reject all selected vendors?')"
+                        class="px-4 py-2 text-xs font-bold rounded-xl transition bg-rose-600 hover:bg-rose-700 text-white shadow-sm">
+                    ✕ Reject Selected
+                </button>
+            </form>
+        </div>
     </div>
 
     <!-- Vendors Table -->
@@ -70,10 +121,14 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 text-xs uppercase font-semibold text-gray-500 border-b border-gray-200">
+                            <th class="px-4 py-3.5 w-10">
+                                <input type="checkbox" @@change="toggleAll($event)"
+                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer" />
+                            </th>
                             <th class="px-6 py-3.5">Business Name</th>
                             <th class="px-6 py-3.5">Owner Contact</th>
                             <th class="px-6 py-3.5">Status</th>
-                            <th class="px-6 py-3.5">Registered Date</th>
+                            <th class="px-6 py-3.5">Registered</th>
                             <th class="px-6 py-3.5 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -81,14 +136,43 @@
                         @foreach (var vendor in Model.Vendors)
                         {
                             <tr class="hover:bg-gray-50/80 transition">
-                                <td class="px-6 py-4">
-                                    <p class="font-bold text-gray-900">@vendor.BusinessName</p>
-                                    <p class="text-xs text-gray-500">@vendor.BusinessAddress</p>
+                                <td class="px-4 py-4">
+                                    <input type="checkbox" value="@vendor.VendorId"
+                                           x-model="selectedIds"
+                                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer" />
                                 </td>
                                 <td class="px-6 py-4">
-                                    <p class="font-semibold text-gray-900 text-xs">@vendor.OwnerName</p>
-                                    <p class="text-xs text-gray-500">@vendor.OwnerEmail</p>
-                                </td>
+                                <div class="flex items-center gap-3">
+                                    @if (!string.IsNullOrEmpty(vendor.LogoUrl))
+                                    {
+                                        <img src="@vendor.LogoUrl" alt="@vendor.BusinessName"
+                                             class="w-10 h-10 rounded-lg object-cover border border-gray-200 bg-white" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                                            @vendor.Initial
+                                        </div>
+                                    }
+                                    <div class="min-w-0">
+                                        <p class="font-bold text-gray-900 truncate">@vendor.BusinessName</p>
+                                        <p class="text-xs text-gray-500 truncate">@vendor.BusinessAddress</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    @if (!string.IsNullOrEmpty(vendor.OwnerAvatarUrl))
+                                    {
+                                        <img src="@vendor.OwnerAvatarUrl" alt="@vendor.OwnerName"
+                                             class="w-8 h-8 rounded-full object-cover border border-gray-200" />
+                                    }
+                                    <div class="min-w-0">
+                                        <p class="font-semibold text-gray-900 text-xs truncate">@vendor.OwnerName</p>
+                                        <p class="text-xs text-gray-500 truncate">@vendor.OwnerEmail</p>
+                                    </div>
+                                </div>
+                            </td>
                                 <td class="px-6 py-4">
                                     @switch (vendor.Status)
                                     {
@@ -99,7 +183,7 @@
                                             <span class="px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-800 rounded-full">Pending</span>
                                             break;
                                         case VendorStatus.Suspended:
-                                            <span class="px-2.5 py-1 text-xs font-bold bg-red-100 text-red-800 rounded-full">Suspended</span>
+                                            <span class="px-2.5 py-1 text-xs font-bold bg-rose-100 text-rose-800 rounded-full">Suspended</span>
                                             break;
                                         case VendorStatus.Rejected:
                                             <span class="px-2.5 py-1 text-xs font-bold bg-rose-100 text-rose-800 rounded-full">Rejected</span>
@@ -124,7 +208,6 @@
                                                 </button>
                                             </form>
                                         }
-
                                         @if (vendor.Status != VendorStatus.Suspended)
                                         {
                                             <form asp-area="Admin" asp-controller="Dashboard" asp-action="UpdateVendorStatus" method="post" class="inline">
@@ -145,20 +228,22 @@
                 </table>
             </div>
 
-            <!-- Pagination Footer -->
+            <!-- Pagination -->
             <div class="flex items-center justify-between border-t border-gray-200 px-6 py-4">
                 <p class="text-xs text-gray-500">
-                    Showing page <span class="font-bold text-gray-800">@Model.CurrentPage</span> of <span class="font-bold text-gray-800">@Model.TotalPages</span> (@Model.TotalCount total vendors)
+                    Page <span class="font-bold text-gray-800">@Model.CurrentPage</span> of
+                    <span class="font-bold text-gray-800">@Model.TotalPages</span>
+                    (@Model.TotalCount total)
                 </p>
                 <div class="flex items-center gap-2">
-                    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors"
+                    <a asp-action="Vendors"
                        asp-route-statusFilter="@Model.SelectedStatus"
                        asp-route-searchKeyword="@Model.SearchKeyword"
                        asp-route-page="@(Model.CurrentPage - 1)"
                        class="px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded-lg text-gray-600 transition @(!Model.HasPreviousPage ? "opacity-50 pointer-events-none" : "hover:bg-gray-100")">
                         Previous
                     </a>
-                    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Vendors"
+                    <a asp-action="Vendors"
                        asp-route-statusFilter="@Model.SelectedStatus"
                        asp-route-searchKeyword="@Model.SearchKeyword"
                        asp-route-page="@(Model.CurrentPage + 1)"
@@ -176,3 +261,26 @@
         }
     </div>
 </div>
+
+<script>
+    function vendorBulkTable() {
+        return {
+            selectedIds: [],
+
+            toggleAll(event) {
+                const checked = event.target.checked;
+                const checkboxes = document.querySelectorAll('input[type="checkbox"][value]');
+                if (checked) {
+                    this.selectedIds = Array.from(checkboxes).map(cb => cb.value);
+                } else {
+                    this.selectedIds = [];
+                }
+            },
+
+            clearAll() {
+                this.selectedIds = [];
+                document.querySelectorAll('input[type="checkbox"][value]').forEach(cb => cb.checked = false);
+            }
+        };
+    }
+</script>

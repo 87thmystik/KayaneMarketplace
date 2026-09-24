@@ -43,7 +43,8 @@ public class DashboardController : Controller
                 BusinessAddress = v.BusinessAddress ?? "",
                 BusinessEmail = v.SupportEmail ?? v.User.Email,
                 BusinessPhone = v.SupportPhone ?? "",
-                CreatedAt = v.CreatedAt
+                CreatedAt = v.CreatedAt,
+                LogoUrl = v.LogoUrl
             })
             .ToListAsync();
 
@@ -135,8 +136,11 @@ public class DashboardController : Controller
                 BusinessAddress = v.BusinessAddress ?? "",
                 OwnerName = v.User == null ? "" : v.User.Name,
                 OwnerEmail = v.User == null ? "" : v.User.Email,
+                OwnerPhone = v.User == null ? "" : v.User.Phone,
                 Status = v.Status,
-                CreatedAt = v.CreatedAt
+                CreatedAt = v.CreatedAt,
+                LogoUrl = v.LogoUrl,
+                OwnerAvatarUrl = v.User != null ? v.User.AvatarUrl : null
             })
             .ToListAsync();
 
@@ -151,38 +155,6 @@ public class DashboardController : Controller
         };
 
         return View(vm);
-    }
-
-    // POST: /Admin/Dashboard/UpdateVendorStatus
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateVendorStatus(Guid vendorId, VendorStatus status, string? returnUrl = null)
-    {
-        var vendor = await _context.Vendors.FindAsync(vendorId);
-        if (vendor == null) return NotFound();
-
-        var oldStatus = vendor.Status;
-        vendor.Status = status;
-
-        await _audit.LogAsync("vendor_status_change", "Vendor", vendor.VendorId, new
-        {
-            previousStatus = oldStatus.ToString(),
-            newStatus = status.ToString(),
-            businessName = vendor.BusinessName
-        });
-
-        await _context.SaveChangesAsync();
-
-        _cache.Remove($"vendor_user_{vendor.UserId}");
-
-        TempData["SuccessMessage"] = $"Vendor status updated to {status}.";
-
-        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-        {
-            return Redirect(returnUrl);
-        }
-
-        return RedirectToAction(nameof(Vendors));
     }
 
     // GET: /Admin/Dashboard/Products
@@ -227,6 +199,7 @@ public class DashboardController : Controller
 
         return View(vm);
     }
+
     // POST: /Admin/Dashboard/Approve/{id}
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -249,6 +222,7 @@ public class DashboardController : Controller
         TempData["SuccessMessage"] = $"Product '{product.Name}' approved.";
         return RedirectToAction(nameof(Products), new { statusFilter = ProductStatus.Pending });
     }
+
     // POST: /Admin/Dashboard/Reject
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -301,6 +275,239 @@ public class DashboardController : Controller
         }
 
         return RedirectToAction(nameof(Products));
+    }
+
+    // POST: /Admin/Dashboard/UpdateVendorStatus
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateVendorStatus(Guid vendorId, VendorStatus status, string? returnUrl = null)
+    {
+        var vendor = await _context.Vendors.FindAsync(vendorId);
+        if (vendor == null) return NotFound();
+
+        var oldStatus = vendor.Status;
+        vendor.Status = status;
+
+        await _audit.LogAsync("vendor_status_change", "Vendor", vendor.VendorId, new
+        {
+            previousStatus = oldStatus.ToString(),
+            newStatus = status.ToString(),
+            businessName = vendor.BusinessName
+        });
+
+        await _context.SaveChangesAsync();
+
+        _cache.Remove($"vendor_user_{vendor.UserId}");
+
+        TempData["SuccessMessage"] = $"Vendor status updated to {status}.";
+
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+
+        return RedirectToAction(nameof(Vendors));
+    }
+
+    // ===================== BULK PRODUCT ACTIONS =====================
+
+    // POST: /Admin/Dashboard/BulkApproveProducts
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BulkApproveProducts(Guid[] productIds)
+    {
+        if (productIds == null || productIds.Length == 0)
+        {
+            TempData["ErrorMessage"] = "No products selected.";
+            return RedirectToAction(nameof(Products));
+        }
+
+        var products = await _context.Products
+            .Where(p => productIds.Contains(p.ProductId))
+            .ToListAsync();
+
+        var result = new BulkActionResultVM { Total = productIds.Length };
+
+        foreach (var product in products)
+        {
+            if (product.Status == ProductStatus.Approved)
+            {
+                result.Skipped++;
+                continue;
+            }
+
+            var oldStatus = product.Status;
+            product.Status = ProductStatus.Approved;
+
+            await _audit.LogAsync("product_approved", "Product", product.ProductId, new
+            {
+                productName = product.Name,
+                previousStatus = oldStatus.ToString(),
+                via = "bulk action"
+            });
+
+            result.Succeeded++;
+        }
+
+        result.Skipped += productIds.Length - products.Count;
+
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = result.SuccessMessage();
+        return RedirectToAction(nameof(Products), new { statusFilter = ProductStatus.Pending });
+    }
+
+    // POST: /Admin/Dashboard/BulkRejectProducts
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BulkRejectProducts(Guid[] productIds, string? rejectionReason)
+    {
+        if (productIds == null || productIds.Length == 0)
+        {
+            TempData["ErrorMessage"] = "No products selected.";
+            return RedirectToAction(nameof(Products));
+        }
+
+        var products = await _context.Products
+            .Where(p => productIds.Contains(p.ProductId))
+            .ToListAsync();
+
+        var reasonText = string.IsNullOrWhiteSpace(rejectionReason)
+            ? "Does not meet listing guidelines."
+            : rejectionReason.Trim();
+
+        var result = new BulkActionResultVM { Total = productIds.Length };
+
+        foreach (var product in products)
+        {
+            if (product.Status == ProductStatus.Rejected)
+            {
+                result.Skipped++;
+                continue;
+            }
+
+            var oldStatus = product.Status;
+            product.Status = ProductStatus.Rejected;
+            product.RejectionReason = reasonText;
+
+            await _audit.LogAsync("product_rejected", "Product", product.ProductId, new
+            {
+                productName = product.Name,
+                previousStatus = oldStatus.ToString(),
+                reason = reasonText,
+                via = "bulk action"
+            });
+
+            result.Succeeded++;
+        }
+
+        result.Skipped += productIds.Length - products.Count;
+
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = result.SuccessMessage();
+        return RedirectToAction(nameof(Products), new { statusFilter = ProductStatus.Pending });
+    }
+
+    // ===================== BULK VENDOR ACTIONS =====================
+
+    // POST: /Admin/Dashboard/BulkApproveVendors
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BulkApproveVendors(Guid[] vendorIds)
+    {
+        if (vendorIds == null || vendorIds.Length == 0)
+        {
+            TempData["ErrorMessage"] = "No vendors selected.";
+            return RedirectToAction(nameof(Vendors));
+        }
+
+        var vendors = await _context.Vendors
+            .Where(v => vendorIds.Contains(v.VendorId))
+            .ToListAsync();
+
+        var result = new BulkActionResultVM { Total = vendorIds.Length };
+        var evictedKeys = new List<string>();
+
+        foreach (var vendor in vendors)
+        {
+            if (vendor.Status == VendorStatus.Active)
+            {
+                result.Skipped++;
+                continue;
+            }
+
+            var oldStatus = vendor.Status;
+            vendor.Status = VendorStatus.Active;
+
+            await _audit.LogAsync("vendor_status_change", "Vendor", vendor.VendorId, new
+            {
+                previousStatus = oldStatus.ToString(),
+                newStatus = VendorStatus.Active.ToString(),
+                businessName = vendor.BusinessName,
+                via = "bulk action"
+            });
+
+            evictedKeys.Add($"vendor_user_{vendor.UserId}");
+            result.Succeeded++;
+        }
+
+        result.Skipped += vendorIds.Length - vendors.Count;
+
+        await _context.SaveChangesAsync();
+
+        foreach (var key in evictedKeys)
+            _cache.Remove(key);
+
+        TempData["SuccessMessage"] = result.SuccessMessage();
+        return RedirectToAction(nameof(Vendors), new { statusFilter = VendorStatus.Pending });
+    }
+
+    // POST: /Admin/Dashboard/BulkRejectVendors
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BulkRejectVendors(Guid[] vendorIds)
+    {
+        if (vendorIds == null || vendorIds.Length == 0)
+        {
+            TempData["ErrorMessage"] = "No vendors selected.";
+            return RedirectToAction(nameof(Vendors));
+        }
+
+        var vendors = await _context.Vendors
+            .Where(v => vendorIds.Contains(v.VendorId))
+            .ToListAsync();
+
+        var result = new BulkActionResultVM { Total = vendorIds.Length };
+
+        foreach (var vendor in vendors)
+        {
+            if (vendor.Status == VendorStatus.Rejected)
+            {
+                result.Skipped++;
+                continue;
+            }
+
+            var oldStatus = vendor.Status;
+            vendor.Status = VendorStatus.Rejected;
+
+            await _audit.LogAsync("vendor_status_change", "Vendor", vendor.VendorId, new
+            {
+                previousStatus = oldStatus.ToString(),
+                newStatus = VendorStatus.Rejected.ToString(),
+                businessName = vendor.BusinessName,
+                via = "bulk action"
+            });
+
+            result.Succeeded++;
+        }
+
+        result.Skipped += vendorIds.Length - vendors.Count;
+
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = result.SuccessMessage();
+        return RedirectToAction(nameof(Vendors), new { statusFilter = VendorStatus.Pending });
     }
 
     // GET: /Admin/Dashboard/PendingProducts

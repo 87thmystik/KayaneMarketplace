@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace Kayane.ViewModels;
 
@@ -34,6 +35,14 @@ public class RegisterVendorVM
     [Required(ErrorMessage = "Please confirm your password.")]
     [DataType(DataType.Password)]
     [Compare("Password", ErrorMessage = "Passwords do not match.")]
-    public string ConfirmPassword { get; set; } = string.Empty; 
+    public string ConfirmPassword { get; set; } = string.Empty;
+
     public string AccountNumber { get; set; } = string.Empty;
+
+    // NEW
+    [Display(Name = "Store Logo")]
+    public IFormFile? LogoFile { get; set; }
+
+    [Display(Name = "Store Banner")]
+    public IFormFile? BannerFile { get; set; }
 }

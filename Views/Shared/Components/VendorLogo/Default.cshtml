@@ -1,0 +1,7 @@
+﻿@model dynamic
+
+@if (!string.IsNullOrEmpty(Model.LogoUrl))
+{
+    <img src="@Model.LogoUrl" alt="@Model.BusinessName"
+         class="w-7 h-7 rounded-lg object-cover border border-emerald-200 bg-white" />
+}
