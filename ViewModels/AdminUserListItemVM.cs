@@ -12,6 +12,7 @@ public class AdminUserListItemVM
     public DateTime CreatedAt { get; set; }
 
     public bool IsBanned { get; set; }
+    public bool IsSuperAdmin { get; set; }
     public string? BannedReason { get; set; }
     public bool MustChangePassword { get; set; }
     public bool IsDeleted { get; set; }
@@ -40,4 +41,5 @@ public class AdminUserListVM
         : 1;
     public bool HasPreviousPage => CurrentPage > 1;
     public bool HasNextPage => CurrentPage < TotalPages;
+    public bool CurrentUserIsSuperAdmin { get; set; }
 }

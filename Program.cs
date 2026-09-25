@@ -196,6 +196,7 @@ using (var scope = app.Services.CreateScope())
                     Email = seedEmail,
                     Phone = seedPhone,
                     Role = Kayane.Models.UserRole.Admin,
+                    IsSuperAdmin = true,     
                     CreatedAt = DateTime.UtcNow
                 };
                 adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, seedPassword);

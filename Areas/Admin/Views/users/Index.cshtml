@@ -1,8 +1,12 @@
 ﻿@model Kayane.ViewModels.AdminUserListVM
 @using Kayane.Models
+@using System.Security.Claims
 
 @{
     ViewData["Title"] = "User Management";
+
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var isSuperAdmin = Model.CurrentUserIsSuperAdmin;
 
     string RoleBadge(UserRole role) => role switch
     {
@@ -20,11 +24,20 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
     <!-- Header -->
-    <div class="border-b border-gray-200 pb-6">
-        <h1 class="text-3xl font-extrabold text-gray-900">User Management</h1>
-        <p class="text-sm text-gray-500 mt-1">
-            Review accounts, ban abusive users, and force password resets.
-        </p>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900">User Management</h1>
+            <p class="text-sm text-gray-500 mt-1">
+                Review accounts, ban abusive users, and force password resets.
+            </p>
+        </div>
+        @if (isSuperAdmin)
+        {
+            <a asp-action="CreateAdmin"
+               class="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-xl transition shadow-sm w-fit">
+                + Create Admin
+            </a>
+        }
     </div>
 
     @if (TempData["SuccessMessage"] != null)
@@ -118,6 +131,10 @@
                     <tbody class="divide-y divide-gray-100 text-sm">
                         @foreach (var u in Model.Users)
                         {
+                            var isSelf = u.UserId.ToString() == currentUserId;
+                            var isProtected = u.IsSuperAdmin;
+                            var isAdminRow = u.Role == UserRole.Admin;
+
                             <tr class="hover:bg-gray-50/80 transition align-top">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
@@ -125,7 +142,13 @@
                                             @u.Initial
                                         </div>
                                         <div class="min-w-0">
-                                            <div class="font-bold text-gray-900 text-sm truncate">@u.Name</div>
+                                            <div class="font-bold text-gray-900 text-sm truncate">
+                                                @u.Name
+                                                @if (isSelf)
+                                                {
+                                                    <span class="text-[10px] font-bold text-indigo-600 ml-1">(You)</span>
+                                                }
+                                            </div>
                                             <div class="text-[11px] text-gray-500 truncate">@u.Email</div>
                                             @if (!string.IsNullOrEmpty(u.Phone))
                                             {
@@ -135,9 +158,17 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold @RoleBadge(u.Role)">
-                                        @u.Role
-                                    </span>
+                                    <div class="flex flex-col gap-1 items-start">
+                                        <span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold @RoleBadge(u.Role)">
+                                            @u.Role
+                                        </span>
+                                        @if (u.IsSuperAdmin)
+                                        {
+                                            <span class="inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 uppercase tracking-wider">
+                                                ⭐ Super
+                                            </span>
+                                        }
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 text-xs">
                                     @if (u.Role == UserRole.User)
@@ -188,13 +219,21 @@
                                     @u.CreatedAt.ToString("MMM dd, yyyy")
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    @if (u.Role == UserRole.Admin)
+                                    @if (isProtected)
                                     {
-                                        <span class="text-[10px] text-gray-400 italic">Protected</span>
+                                        <span class="text-[10px] text-amber-600 font-bold italic">⭐ Super Admin — Protected</span>
+                                    }
+                                    else if (isSelf)
+                                    {
+                                        <span class="text-[10px] text-gray-400 italic">That's you</span>
                                     }
                                     else if (u.IsDeleted)
                                     {
                                         <span class="text-[10px] text-gray-400 italic">Deleted</span>
+                                    }
+                                    else if (isAdminRow && !isSuperAdmin)
+                                    {
+                                        <span class="text-[10px] text-gray-400 italic">Super Admin only</span>
                                     }
                                     else
                                     {
@@ -247,7 +286,6 @@
                 </table>
             </div>
 
-            <!-- Pagination -->
             @if (Model.TotalPages > 1)
             {
                 <div class="flex items-center justify-center gap-2 border-t border-gray-100 py-4">

@@ -3,6 +3,7 @@ using Kayane.Models;
 using Kayane.Services;
 using Kayane.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -43,7 +44,6 @@ public class UsersController : Controller
 
         var query = _context.Users.AsNoTracking();
 
-        // Status filter (defaults to active only)
         switch (statusFilter)
         {
             case "banned":
@@ -53,7 +53,6 @@ public class UsersController : Controller
                 query = query.Where(u => u.DeletedAt != null);
                 break;
             case "all":
-                // no filter
                 break;
             case "active":
             default:
@@ -90,13 +89,13 @@ public class UsersController : Controller
                 u.IsBanned,
                 u.BannedReason,
                 u.MustChangePassword,
+                u.IsSuperAdmin,
                 DeletedAt = u.DeletedAt
             })
             .ToListAsync();
 
         var userIds = raw.Select(r => r.UserId).ToList();
 
-        // Order aggregates in one query
         var orderStats = await _context.Orders
             .AsNoTracking()
             .Where(o => userIds.Contains(o.UserId))
@@ -127,6 +126,7 @@ public class UsersController : Controller
                 BannedReason = r.BannedReason,
                 MustChangePassword = r.MustChangePassword,
                 IsDeleted = r.DeletedAt.HasValue,
+                IsSuperAdmin = r.IsSuperAdmin,
                 TotalOrders = stats?.TotalOrders ?? 0,
                 TotalSpent = stats?.TotalSpent ?? 0m
             };
@@ -142,8 +142,76 @@ public class UsersController : Controller
             PageSize = pageSize,
             TotalItems = totalItems
         };
-
+        vm.CurrentUserIsSuperAdmin = await CurrentUserIsSuperAdminAsync();
         return View(vm);
+    }
+
+    // GET: /{adminPrefix}/Users/CreateAdmin
+    [HttpGet]
+    public async Task<IActionResult> CreateAdmin()
+    {
+        if (!await CurrentUserIsSuperAdminAsync())
+        {
+            TempData["ErrorMessage"] = "Only the Super Admin can create new admins.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        return View(new AdminCreateVM());
+    }
+
+    // POST: /{adminPrefix}/Users/CreateAdmin
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateAdmin(AdminCreateVM model)
+    {
+        if (!await CurrentUserIsSuperAdminAsync())
+        {
+            TempData["ErrorMessage"] = "Only the Super Admin can create new admins.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (!ModelState.IsValid) return View(model);
+
+        var normalizedEmail = model.Email.Trim().ToLowerInvariant();
+
+        if (await _context.Users.AnyAsync(u => u.Email == normalizedEmail))
+        {
+            ModelState.AddModelError(nameof(model.Email), "An account with this email already exists.");
+            return View(model);
+        }
+
+        var adminUser = new User
+        {
+            UserId = Guid.NewGuid(),
+            Name = model.Name.Trim(),
+            Email = normalizedEmail,
+            Phone = (model.Phone ?? "").Trim(),
+            Role = UserRole.Admin,
+            IsSuperAdmin = false,
+            EmailVerified = true,              // Super Admin vouches for them
+            EmailVerifiedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var hasher = new PasswordHasher<User>();
+        adminUser.PasswordHash = hasher.HashPassword(adminUser, model.Password);
+
+        _context.Users.Add(adminUser);
+
+        await _audit.LogAsync("admin_created", "User", adminUser.UserId, new
+        {
+            email = adminUser.Email,
+            name = adminUser.Name
+        });
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Super Admin {AdminId} created new admin {NewAdminId} ({Email})",
+            GetAdminId(), adminUser.UserId, adminUser.Email);
+
+        TempData["SuccessMessage"] = $"Admin account created for {adminUser.Name}.";
+        return RedirectToAction(nameof(Index));
     }
 
     // POST: /{adminPrefix}/Users/Ban
@@ -163,9 +231,17 @@ public class UsersController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        if (target.Role == UserRole.Admin)
+        // Super Admin is untouchable
+        if (target.IsSuperAdmin)
         {
-            TempData["ErrorMessage"] = "Admins can't be banned from this panel.";
+            TempData["ErrorMessage"] = "The Super Admin cannot be banned.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Regular admins can only be banned by the Super Admin
+        if (target.Role == UserRole.Admin && !await CurrentUserIsSuperAdminAsync())
+        {
+            TempData["ErrorMessage"] = "Only the Super Admin can ban other admins.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -195,6 +271,13 @@ public class UsersController : Controller
         var target = await _context.Users.FindAsync(userId);
         if (target == null) return NotFound();
 
+        // Regular admins can only be unbanned by the Super Admin
+        if (target.Role == UserRole.Admin && !await CurrentUserIsSuperAdminAsync())
+        {
+            TempData["ErrorMessage"] = "Only the Super Admin can unban other admins.";
+            return RedirectToAction(nameof(Index));
+        }
+
         target.IsBanned = false;
         target.BannedReason = null;
 
@@ -216,6 +299,22 @@ public class UsersController : Controller
     {
         var target = await _context.Users.FindAsync(userId);
         if (target == null) return NotFound();
+
+        // Admins can only be forced to reset by Super Admin
+        if (target.Role == UserRole.Admin &&
+            !target.IsSuperAdmin &&
+            !await CurrentUserIsSuperAdminAsync())
+        {
+            TempData["ErrorMessage"] = "Only the Super Admin can force password resets on other admins.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Nobody can force the Super Admin to reset from this panel
+        if (target.IsSuperAdmin && !IsCurrentUser(target.UserId))
+        {
+            TempData["ErrorMessage"] = "The Super Admin cannot be forced to reset from this panel.";
+            return RedirectToAction(nameof(Index));
+        }
 
         target.MustChangePassword = true;
 
@@ -252,13 +351,20 @@ public class UsersController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        if (target.Role == UserRole.Admin)
+        // Super Admin is untouchable
+        if (target.IsSuperAdmin)
         {
-            TempData["ErrorMessage"] = "Admins can't be deleted from this panel.";
+            TempData["ErrorMessage"] = "The Super Admin cannot be deleted.";
             return RedirectToAction(nameof(Index));
         }
 
-        // Soft delete
+        // Regular admins can only be deleted by the Super Admin
+        if (target.Role == UserRole.Admin && !await CurrentUserIsSuperAdminAsync())
+        {
+            TempData["ErrorMessage"] = "Only the Super Admin can delete other admins.";
+            return RedirectToAction(nameof(Index));
+        }
+
         target.DeletedAt = DateTime.UtcNow;
         target.IsBanned = true;
         target.BannedReason = "Account deleted";
@@ -275,9 +381,24 @@ public class UsersController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // ===================== Helpers =====================
+
     private Guid? GetAdminId()
     {
         var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         return Guid.TryParse(claim, out var id) ? id : null;
+    }
+
+    private bool IsCurrentUser(Guid userId) => GetAdminId() == userId;
+
+    private async Task<bool> CurrentUserIsSuperAdminAsync()
+    {
+        if (GetAdminId() is not { } adminId) return false;
+
+        return await _context.Users
+            .AsNoTracking()
+            .Where(u => u.UserId == adminId)
+            .Select(u => u.IsSuperAdmin)
+            .FirstOrDefaultAsync();
     }
 }

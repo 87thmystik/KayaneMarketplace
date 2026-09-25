@@ -49,6 +49,9 @@ public class User
     [Column("deleted_at")]
     public DateTime? DeletedAt { get; set; }
 
+    [Column("is_super_admin")]
+    public bool IsSuperAdmin { get; set; }
+
     // Email verification (Pass 19)
     [Column("email_verified")]
     public bool EmailVerified { get; set; }
