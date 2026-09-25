@@ -113,7 +113,7 @@
                                    class="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden block">
                                     @if (!string.IsNullOrEmpty(product.ImageUrl))
                                     {
-                                        <img src="@product.ImageUrl" alt="@product.Name"
+                                       <img src="@(product.ThumbnailUrl ?? product.ImageUrl)" alt="@product.Name"
                                              class="w-full h-full object-cover group-hover:scale-110 transition duration-300" />
                                     }
                                     else

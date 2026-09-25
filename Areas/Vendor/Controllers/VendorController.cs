@@ -22,18 +22,23 @@ public class VendorController : Controller
     private readonly IEmailService _emailService;
     private readonly IWebHostEnvironment _environment;
     private readonly INotificationService _notifications;
+    private readonly IImageService _imageService;        
 
     public VendorController(
         KayaneDb context,
         IEmailService emailService,
         IWebHostEnvironment environment,
-        INotificationService notifications)
+        INotificationService notifications,
+        IImageService imageService)                   
     {
         _context = context;
         _emailService = emailService;
         _environment = environment;
         _notifications = notifications;
+        _imageService = imageService;                    
     }
+
+    // ... rest of the class
 
     // Helper property to retrieve the Vendor injected by [ApprovedVendor] filter
     private Vendor CurrentVendor => HttpContext.GetCurrentVendor();
@@ -63,52 +68,6 @@ public class VendorController : Controller
                 Selected = selectedCategoryId.HasValue && c.CategoryId == selectedCategoryId.Value
             })
             .ToListAsync();
-    }
-
-    private async Task<(string? RelativePath, string? ErrorMessage)> ProcessImageUploadAsync(
-        IFormFile? file,
-        string subFolder)
-    {
-        if (file == null || file.Length == 0) return (null, null);
-
-        const long maxBytes = 5 * 1024 * 1024;   // 5 MB
-        if (file.Length > maxBytes)
-            return (null, "Image must be smaller than 5 MB.");
-
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-        if (!allowedExtensions.Contains(extension))
-            return (null, "Only .jpg, .jpeg, .png, and .webp images are allowed.");
-
-        var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", subFolder);
-        Directory.CreateDirectory(uploadsFolder);
-
-        var uniqueFileName = $"{Guid.NewGuid()}{extension}";
-        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-        await using var stream = new FileStream(filePath, FileMode.Create);
-        await file.CopyToAsync(stream);
-
-        return ($"/uploads/{subFolder}/{uniqueFileName}", null);
-    }
-
-    private void DeleteImageIfExists(string? relativePath)
-    {
-        if (string.IsNullOrWhiteSpace(relativePath)) return;
-
-        // Only delete files under /uploads/ to avoid touching seeded/static assets.
-        if (!relativePath.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase)) return;
-
-        var fullPath = Path.Combine(
-            _environment.WebRootPath,
-            relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-
-        if (System.IO.File.Exists(fullPath))
-        {
-            try { System.IO.File.Delete(fullPath); }
-            catch { /* best-effort — don't fail the request */ }
-        }
     }
 
     #endregion
@@ -226,14 +185,27 @@ public class VendorController : Controller
             return View(model);
         }
 
-        var upload = await ProcessImageUploadAsync(model.ImageFile, "products");
-        var imageUrl = upload.RelativePath;
-        var imageError = upload.ErrorMessage;
-        if (imageError != null)
+        string? imageUrl = null;
+        string? thumbnailUrl = null;
+
+        if (model.ImageFile != null && model.ImageFile.Length > 0)
         {
-            ModelState.AddModelError("ImageFile", imageError);
-            model.Categories = await GetCategorySelectListAsync(model.CategoryId);
-            return View(model);
+            var result = await _imageService.ProcessAsync(
+                model.ImageFile,
+                "products",
+                maxWidth: 1200,
+                maxHeight: 1200,
+                thumbnailSize: 400);
+
+            if (!result.Success)
+            {
+                ModelState.AddModelError("ImageFile", result.Error!);
+                model.Categories = await GetCategorySelectListAsync(model.CategoryId);
+                return View(model);
+            }
+
+            imageUrl = result.MainPath;
+            thumbnailUrl = result.ThumbnailPath;
         }
 
         var product = new Product
@@ -246,6 +218,7 @@ public class VendorController : Controller
             Price = model.Price,
             Stock = model.Stock,
             ImageUrl = imageUrl,
+            ThumbnailUrl = thumbnailUrl,
             Status = ProductStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
@@ -303,21 +276,26 @@ public class VendorController : Controller
         // If the vendor uploaded a new image, replace the old one.
         if (model.ImageFile != null && model.ImageFile.Length > 0)
         {
-            var upload = await ProcessImageUploadAsync(model.ImageFile, "products");
-            var newImageUrl = upload.RelativePath;
-            var imageError = upload.ErrorMessage;
-            if (imageError != null)
+            var result = await _imageService.ProcessAsync(
+                model.ImageFile,
+                "products",
+                maxWidth: 1200,
+                maxHeight: 1200,
+                thumbnailSize: 400);
+
+            if (!result.Success)
             {
-                ModelState.AddModelError("ImageFile", imageError);
+                ModelState.AddModelError("ImageFile", result.Error!);
                 model.Categories = await GetCategorySelectListAsync(model.CategoryId);
                 return View(model);
             }
 
-            if (newImageUrl != null)
-            {
-                DeleteImageIfExists(product.ImageUrl);
-                product.ImageUrl = newImageUrl;
-            }
+            // Delete old files before replacing
+            _imageService.Delete(product.ImageUrl);
+            _imageService.Delete(product.ThumbnailUrl);
+
+            product.ImageUrl = result.MainPath;
+            product.ThumbnailUrl = result.ThumbnailPath;
         }
         // No new file: keep product.ImageUrl as-is.
 
@@ -450,7 +428,6 @@ public class VendorController : Controller
 
         var order = orderItem.Order;
 
-        // Auto-complete the parent order if every item is Delivered.
         if (order != null)
         {
             await _context.SaveChangesAsync();
@@ -468,7 +445,6 @@ public class VendorController : Controller
             }
         }
 
-        // On transitions into Shipped or Delivered: queue notification + send email.
         if (previousStatus != newStatus &&
             (newStatus == OrderItemStatus.Shipped || newStatus == OrderItemStatus.Delivered) &&
             order != null)
@@ -500,14 +476,12 @@ public class VendorController : Controller
             }
         }
 
-        // Single save — persists item change, order completion, and any queued notification.
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = $"Order item status updated to '{newStatus}'.";
         return RedirectToAction(nameof(Orders), new { status = newStatus });
     }
 
-    // --- Private helper ---
     private async Task SendOrderStatusEmailAsync(Order order, OrderItem item, OrderItemStatus newStatus)
     {
         var reference = order.OrderId.ToString()[..8].ToUpperInvariant();
@@ -528,7 +502,7 @@ public class VendorController : Controller
                <strong>Tracking Number:</strong> {System.Net.WebUtility.HtmlEncode(item.TrackingNumber ?? "N/A")}</p>
             <p>Thank you for shopping with Kayane.</p>";
         }
-        else // Delivered
+        else
         {
             subject = $"Your order #{reference} was delivered";
             heading = "Your Order Was Delivered";
@@ -589,18 +563,21 @@ public class VendorController : Controller
         // Handle logo upload
         if (LogoFile != null && LogoFile.Length > 0)
         {
-            var upload = await ProcessImageUploadAsync(LogoFile, "vendors/logos");
-            if (upload.ErrorMessage != null)
+            var result = await _imageService.ProcessAsync(
+                LogoFile,
+                "vendors/logos",
+                maxWidth: 400,
+                maxHeight: 400,
+                thumbnailSize: 100);
+
+            if (!result.Success)
             {
-                ModelState.AddModelError(nameof(LogoFile), upload.ErrorMessage);
+                ModelState.AddModelError(nameof(LogoFile), result.Error!);
                 return View(model);
             }
 
-            if (upload.RelativePath != null)
-            {
-                DeleteImageIfExists(vendor.LogoUrl);
-                vendor.LogoUrl = upload.RelativePath;
-            }
+            _imageService.Delete(vendor.LogoUrl);
+            vendor.LogoUrl = result.MainPath ?? string.Empty;
         }
 
         vendor.BusinessName = model.BusinessName;
@@ -614,6 +591,7 @@ public class VendorController : Controller
         TempData["SuccessMessage"] = "Profile and bank details updated successfully.";
         return RedirectToAction(nameof(EditProfile));
     }
+
     // POST: /Vendor/CancelOrderItem
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -632,7 +610,6 @@ public class VendorController : Controller
             return RedirectToAction(nameof(Orders));
         }
 
-        // Only cancellable if the vendor hasn't started processing
         if (orderItem.Status != OrderItemStatus.Pending)
         {
             TempData["ErrorMessage"] = "This item can't be cancelled — you've already started processing it.";
@@ -645,7 +622,6 @@ public class VendorController : Controller
             return RedirectToAction(nameof(Orders));
         }
 
-        // Restore stock
         if (orderItem.Product != null)
         {
             orderItem.Product.Stock += orderItem.Quantity;
@@ -653,7 +629,6 @@ public class VendorController : Controller
 
         orderItem.Status = OrderItemStatus.Cancelled;
 
-        // Debit vendor wallet if buyer paid
         var order = orderItem.Order;
         if (order != null && order.PaymentStatus == PaymentStatus.Success)
         {
@@ -677,7 +652,6 @@ public class VendorController : Controller
             }
         }
 
-        // Notify buyer
         if (order != null)
         {
             var reference = order.OrderId.ToString()[..8].ToUpperInvariant();
@@ -691,7 +665,6 @@ public class VendorController : Controller
                 NotificationType.OrderUpdate);
         }
 
-        // If every item is now Cancelled, cancel the whole order.
         if (order != null)
         {
             await _context.SaveChangesAsync();

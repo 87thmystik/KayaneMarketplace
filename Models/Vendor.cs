@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Kayane.Models;
 
 [Table("vendors")]
-public class Vendor
+public class  Vendor
 {
     [Key]
     [Column("vendor_id")]

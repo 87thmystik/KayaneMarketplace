@@ -18,6 +18,7 @@ namespace Kayane.Controllers
         private readonly IEmailService _emailService;
         private readonly IEmailVerificationService _emailVerification;
         private readonly IWebHostEnvironment _environment;
+        private readonly IImageService _imageService;
         private readonly ILogger<AuthController> _logger;
 
         public AuthController(
@@ -26,6 +27,7 @@ namespace Kayane.Controllers
             IEmailService emailService,
             IEmailVerificationService emailVerification,
             IWebHostEnvironment environment,
+            IImageService imageService,
             ILogger<AuthController> logger)
         {
             _context = context;
@@ -33,6 +35,7 @@ namespace Kayane.Controllers
             _emailService = emailService;
             _emailVerification = emailVerification;
             _environment = environment;
+            _imageService = imageService;
             _logger = logger;
         }
 
@@ -86,24 +89,44 @@ namespace Kayane.Controllers
                 return View(model);
             }
 
-            // Process uploads BEFORE the transaction so file errors don't leave orphan DB rows.
-            var logoUpload = await ProcessImageUploadAsync(model.LogoFile, "vendors/logos");
-            if (logoUpload.Error != null)
+            string? logoPath = null;
+            string? bannerPath = null;
+
+            if (model.LogoFile != null && model.LogoFile.Length > 0)
             {
-                ModelState.AddModelError("LogoFile", logoUpload.Error);
-                ViewData["ReturnUrl"] = returnUrl;
-                return View(model);
+                var result = await _imageService.ProcessAsync(
+                    model.LogoFile,
+                    "vendors/logos",
+                    maxWidth: 400,
+                    maxHeight: 400,
+                    thumbnailSize: 100);
+
+                if (!result.Success)
+                {
+                    ModelState.AddModelError("LogoFile", result.Error!);
+                    ViewData["ReturnUrl"] = returnUrl;
+                    return View(model);
+                }
+                logoPath = result.MainPath;
             }
 
-            var bannerUpload = await ProcessImageUploadAsync(model.BannerFile, "vendors/banners");
-            if (bannerUpload.Error != null)
+            if (model.BannerFile != null && model.BannerFile.Length > 0)
             {
-                // Delete the already-uploaded logo so we don't leave orphans
-                if (logoUpload.Path != null) DeleteImageIfExists(logoUpload.Path);
+                var result = await _imageService.ProcessAsync(
+                    model.BannerFile,
+                    "vendors/banners",
+                    maxWidth: 1920,
+                    maxHeight: 600,
+                    cropToMax: true);
 
-                ModelState.AddModelError("BannerFile", bannerUpload.Error);
-                ViewData["ReturnUrl"] = returnUrl;
-                return View(model);
+                if (!result.Success)
+                {
+                    if (logoPath != null) _imageService.Delete(logoPath);
+                    ModelState.AddModelError("BannerFile", result.Error!);
+                    ViewData["ReturnUrl"] = returnUrl;
+                    return View(model);
+                }
+                bannerPath = result.MainPath;
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -133,8 +156,8 @@ namespace Kayane.Controllers
                     BusinessDescription = model.BusinessDescription,
                     BusinessAddress = model.BusinessAddress,
                     AccountNumber = model.AccountNumber,
-                    LogoUrl = logoUpload.Path ?? string.Empty,
-                    BannerUrl = bannerUpload.Path,
+                    LogoUrl = logoPath ?? string.Empty,
+                    BannerUrl = bannerPath,
                     Status = VendorStatus.Pending,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -161,58 +184,13 @@ namespace Kayane.Controllers
             {
                 await transaction.RollbackAsync();
 
-                // Clean up uploaded files since the DB write failed
-                if (logoUpload.Path != null) DeleteImageIfExists(logoUpload.Path);
-                if (bannerUpload.Path != null) DeleteImageIfExists(bannerUpload.Path);
+                if (logoPath != null) _imageService.Delete(logoPath);
+                if (bannerPath != null) _imageService.Delete(bannerPath);
 
                 _logger.LogError(ex, "Error occurred during vendor registration for {Email}", model.Email);
                 ModelState.AddModelError(string.Empty, "An unexpected error occurred. Please try again.");
                 ViewData["ReturnUrl"] = returnUrl;
                 return View(model);
-            }
-        }
-
-        // ===================== IMAGE UPLOAD HELPERS =====================
-
-        private async Task<(string? Path, string? Error)> ProcessImageUploadAsync(IFormFile? file, string subFolder)
-        {
-            if (file == null || file.Length == 0) return (null, null);
-
-            const long maxBytes = 5 * 1024 * 1024;
-            if (file.Length > maxBytes)
-                return (null, "Image must be smaller than 5 MB.");
-
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-            if (!allowedExtensions.Contains(extension))
-                return (null, "Only .jpg, .jpeg, .png, and .webp images are allowed.");
-
-            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", subFolder);
-            Directory.CreateDirectory(uploadsFolder);
-
-            var uniqueFileName = $"{Guid.NewGuid()}{extension}";
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            await using var stream = new FileStream(filePath, FileMode.Create);
-            await file.CopyToAsync(stream);
-
-            return ($"/uploads/{subFolder}/{uniqueFileName}", null);
-        }
-
-        private void DeleteImageIfExists(string? relativePath)
-        {
-            if (string.IsNullOrWhiteSpace(relativePath)) return;
-            if (!relativePath.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase)) return;
-
-            var fullPath = Path.Combine(
-                _environment.WebRootPath,
-                relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-
-            if (System.IO.File.Exists(fullPath))
-            {
-                try { System.IO.File.Delete(fullPath); }
-                catch { /* best-effort */ }
             }
         }
 

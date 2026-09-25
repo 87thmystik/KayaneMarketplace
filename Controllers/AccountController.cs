@@ -1,5 +1,6 @@
 ﻿using Kayane.Data;
 using Kayane.Models;
+using Kayane.Services;
 using Kayane.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -15,14 +16,15 @@ public class AccountController : Controller
     private readonly KayaneDb _context;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<AccountController> _logger;
+    private readonly IImageService _imageService;
 
     public AccountController(
         KayaneDb context,
-        IWebHostEnvironment environment,
+        IImageService imageService,
         ILogger<AccountController> logger)
     {
         _context = context;
-        _environment = environment;
+        _imageService = imageService;
         _logger = logger;
     }
 
@@ -88,47 +90,26 @@ public class AccountController : Controller
             return RedirectToAction(nameof(Profile));
         }
 
-        const long maxBytes = 5 * 1024 * 1024;
-        if (avatarFile.Length > maxBytes)
-        {
-            TempData["ErrorMessage"] = "Image must be smaller than 5 MB.";
-            return RedirectToAction(nameof(Profile));
-        }
-
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-        var extension = Path.GetExtension(avatarFile.FileName).ToLowerInvariant();
-        if (!allowedExtensions.Contains(extension))
-        {
-            TempData["ErrorMessage"] = "Only .jpg, .jpeg, .png, and .webp images are allowed.";
-            return RedirectToAction(nameof(Profile));
-        }
-
         var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
         if (user == null) return NotFound();
 
-        var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "avatars");
-        Directory.CreateDirectory(uploadsFolder);
+        var result = await _imageService.ProcessAsync(
+            avatarFile,
+            "avatars",
+            maxWidth: 400,
+            maxHeight: 400,
+            thumbnailSize: 80);
 
-        var uniqueFileName = $"{Guid.NewGuid()}{extension}";
-        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-        await using (var stream = new FileStream(filePath, FileMode.Create))
+        if (!result.Success)
         {
-            await avatarFile.CopyToAsync(stream);
+            TempData["ErrorMessage"] = result.Error;
+            return RedirectToAction(nameof(Profile));
         }
 
-        // Delete old avatar if it exists and is under /uploads/
-        if (!string.IsNullOrWhiteSpace(user.AvatarUrl) &&
-            user.AvatarUrl.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
-        {
-            var oldPath = Path.Combine(
-                _environment.WebRootPath,
-                user.AvatarUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-            try { if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath); }
-            catch { /* best-effort */ }
-        }
+        // Delete old avatar if it exists
+        _imageService.Delete(user.AvatarUrl);
 
-        user.AvatarUrl = $"/uploads/avatars/{uniqueFileName}";
+        user.AvatarUrl = result.MainPath;
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Avatar updated.";

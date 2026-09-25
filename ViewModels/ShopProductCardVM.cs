@@ -12,6 +12,7 @@
 
         public double AverageRating { get; set; }
         public int ReviewCount { get; set; }
+        public string? ThumbnailUrl { get; set; }
 
         public bool IsNewArrival { get; set; }   // last 14 days
         public bool OutOfStock { get; set; }

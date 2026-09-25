@@ -1,4 +1,7 @@
-﻿// Models/Product.cs
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+
+// Models/Product.cs
 namespace Kayane.Models;
 
 public class Product
@@ -16,4 +19,7 @@ public class Product
     public Category? Category { get; set; }
     public Guid? CategoryId { get; set; } = new Guid();
     public string? ImageUrl { get; set; }
+
+    [Column("thumbnail_url")]
+    public string? ThumbnailUrl { get; set; }
 }
