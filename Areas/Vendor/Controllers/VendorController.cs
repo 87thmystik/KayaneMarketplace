@@ -22,23 +22,21 @@ public class VendorController : Controller
     private readonly IEmailService _emailService;
     private readonly IWebHostEnvironment _environment;
     private readonly INotificationService _notifications;
-    private readonly IImageService _imageService;        
+    private readonly IImageService _imageService;
 
     public VendorController(
         KayaneDb context,
         IEmailService emailService,
         IWebHostEnvironment environment,
         INotificationService notifications,
-        IImageService imageService)                   
+        IImageService imageService)
     {
         _context = context;
         _emailService = emailService;
         _environment = environment;
         _notifications = notifications;
-        _imageService = imageService;                    
+        _imageService = imageService;
     }
-
-    // ... rest of the class
 
     // Helper property to retrieve the Vendor injected by [ApprovedVendor] filter
     private Vendor CurrentVendor => HttpContext.GetCurrentVendor();
@@ -344,8 +342,11 @@ public class VendorController : Controller
     // GET: /Vendor/Orders
     [HttpGet]
     [ApprovedVendor]
-    public async Task<IActionResult> Orders(OrderItemStatus? status = null)
+    public async Task<IActionResult> Orders(OrderItemStatus? status = null, int page = 1)
     {
+        const int pageSize = 25;
+        page = Math.Max(1, page);
+
         var baseQuery = _context.OrderItems
             .AsNoTracking()
             .Where(oi => oi.Product.VendorId == CurrentVendor.VendorId);
@@ -362,8 +363,12 @@ public class VendorController : Controller
             query = query.Where(oi => oi.Status == status.Value);
         }
 
+        var totalItems = await query.CountAsync();
+
         var items = await query
             .OrderByDescending(oi => oi.Order.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(oi => new VendorOrderItemVM
             {
                 OrderItemId = oi.OrderItemId,
@@ -389,7 +394,10 @@ public class VendorController : Controller
             ProcessingCount = processingCount,
             ShippedCount = shippedCount,
             DeliveredCount = deliveredCount,
-            CancelledCount = cancelledCount
+            CancelledCount = cancelledCount,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalItems = totalItems
         };
 
         return View(viewModel);
@@ -541,14 +549,27 @@ public class VendorController : Controller
 
         if (vendor == null) return NotFound();
 
-        return View(vendor);
+        var vm = new EditVendorProfileVM
+        {
+            VendorId = vendor.VendorId,
+            BusinessName = vendor.BusinessName,
+            BusinessAddress = vendor.BusinessAddress,
+            SupportPhone = vendor.SupportPhone,
+            SupportEmail = vendor.SupportEmail,
+            BankName = vendor.BankName,
+            BankCode = vendor.BankCode,
+            AccountNumber = vendor.AccountNumber,
+            AccountName = vendor.AccountName
+        };
+
+        return View(vm);
     }
 
     // POST: /Vendor/EditProfile
     [HttpPost]
     [ApprovedVendor]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditProfile(Vendor model, IFormFile? LogoFile)
+    public async Task<IActionResult> EditProfile(EditVendorProfileVM model, IFormFile? LogoFile)
     {
         var vendor = await _context.Vendors
             .FirstOrDefaultAsync(v => v.VendorId == CurrentVendor.VendorId);
@@ -581,10 +602,13 @@ public class VendorController : Controller
         }
 
         vendor.BusinessName = model.BusinessName;
-        vendor.SupportPhone = model.SupportPhone;
+        vendor.BusinessAddress = model.BusinessAddress;
+        vendor.SupportPhone = model.SupportPhone ?? string.Empty;
+        vendor.SupportEmail = model.SupportEmail;
         vendor.BankName = model.BankName;
-        vendor.AccountNumber = model.AccountNumber;
-        vendor.AccountName = model.AccountName;
+        vendor.BankCode = model.BankCode ?? string.Empty;
+        vendor.AccountNumber = model.AccountNumber ?? string.Empty;
+        vendor.AccountName = model.AccountName ?? string.Empty;
 
         await _context.SaveChangesAsync();
 

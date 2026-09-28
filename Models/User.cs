@@ -67,4 +67,13 @@ public class User
 
     [Column("avatar_url")]
     public string? AvatarUrl { get; set; }
+
+    [Column("two_factor_secret")]
+    public string? TwoFactorSecret { get; set; }
+
+    [Column("two_factor_enabled")]
+    public bool TwoFactorEnabled { get; set; }
+
+    [Column("two_factor_recovery_codes")]
+    public string? TwoFactorRecoveryCodes { get; set; }   // JSON array of hashed codes
 }

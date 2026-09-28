@@ -181,8 +181,34 @@
                     </tbody>
                 </table>
             </div>
+                    <!-- Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="flex items-center justify-between border-t border-gray-200 px-6 py-4">
+                <p class="text-xs text-gray-500">
+                    Showing page <span class="font-bold text-gray-800">@Model.CurrentPage</span> of
+                    <span class="font-bold text-gray-800">@Model.TotalPages</span>
+                    (@Model.TotalItems total)
+                </p>
+                <div class="flex items-center gap-2">
+                    <a asp-action="Orders"
+                       asp-route-status="@Model.CurrentFilter"
+                       asp-route-page="@(Model.CurrentPage - 1)"
+                       class="px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded-lg text-gray-600 transition @(!Model.HasPreviousPage ? "opacity-50 pointer-events-none" : "hover:bg-gray-100")">
+                        Previous
+                    </a>
+                    <a asp-action="Orders"
+                       asp-route-status="@Model.CurrentFilter"
+                       asp-route-page="@(Model.CurrentPage + 1)"
+                       class="px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded-lg text-gray-600 transition @(!Model.HasNextPage ? "opacity-50 pointer-events-none" : "hover:bg-gray-100")">
+                        Next
+                    </a>
+                </div>
+            </div>
+        }
         }
     </div>
+
 </div>
 
 <!-- ==================================================================

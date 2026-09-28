@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
 namespace Kayane.Controllers;
 
@@ -18,18 +21,138 @@ public class AccountController : Controller
     private readonly ILogger<AccountController> _logger;
     private readonly IImageService _imageService;
 
+    private readonly ITotpService _totp;
+
     public AccountController(
         KayaneDb context,
         IImageService imageService,
+        ITotpService totp,
         ILogger<AccountController> logger)
     {
         _context = context;
         _imageService = imageService;
+        _totp = totp;
         _logger = logger;
     }
 
     private Guid? CurrentUserId =>
         Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+
+    // GET: /Account/Security
+    [HttpGet]
+    public async Task<IActionResult> Security()
+    {
+        if (CurrentUserId is not { } userId) return Challenge();
+
+        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId);
+        if (user == null) return NotFound();
+
+        ViewBag.TwoFactorEnabled = user.TwoFactorEnabled;
+        return View(new TwoFactorSetupVM());
+    }
+
+    // GET: /Account/SetupTwoFactor
+    [HttpGet]
+    public async Task<IActionResult> SetupTwoFactor()
+    {
+        if (CurrentUserId is not { } userId) return Challenge();
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+        if (user == null) return NotFound();
+
+        if (user.TwoFactorEnabled)
+        {
+            TempData["ErrorMessage"] = "2FA is already enabled.";
+            return RedirectToAction(nameof(Security));
+        }
+
+        // Generate a fresh secret (not saved until confirmed)
+        var secret = _totp.GenerateSecret();
+        var uri = _totp.GetProvisioningUri(secret, user.Email);
+
+        // Generate recovery codes now so we can show them if confirmation succeeds
+        var recoveryCodes = _totp.GenerateRecoveryCodes();
+
+        // Store pending setup in session
+        HttpContext.Session.SetString("Pending2FASecret", secret);
+        HttpContext.Session.SetString("Pending2FARecoveryCodes", JsonSerializer.Serialize(recoveryCodes));
+
+        return View(new TwoFactorSetupVM
+        {
+            Secret = secret,
+            QrCodeUrl = uri,
+            RecoveryCodes = recoveryCodes
+        });
+    }
+
+    // POST: /Account/ConfirmTwoFactor
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmTwoFactor(string code)
+    {
+        if (CurrentUserId is not { } userId) return Challenge();
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+        if (user == null) return NotFound();
+
+        var secret = HttpContext.Session.GetString("Pending2FASecret");
+        var recoveryJson = HttpContext.Session.GetString("Pending2FARecoveryCodes");
+
+        if (string.IsNullOrEmpty(secret) || string.IsNullOrEmpty(recoveryJson))
+        {
+            TempData["ErrorMessage"] = "Setup session expired. Please try again.";
+            return RedirectToAction(nameof(Security));
+        }
+
+        if (!_totp.VerifyCode(secret, code))
+        {
+            TempData["ErrorMessage"] = "Invalid code. Please try again.";
+            return RedirectToAction(nameof(SetupTwoFactor));
+        }
+
+        var recoveryCodes = JsonSerializer.Deserialize<List<string>>(recoveryJson) ?? new();
+
+        // Hash the recovery codes before storing
+        var hashed = recoveryCodes
+            .Select(c => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(c))).ToLowerInvariant())
+            .ToList();
+
+        user.TwoFactorSecret = secret;
+        user.TwoFactorEnabled = true;
+        user.TwoFactorRecoveryCodes = JsonSerializer.Serialize(hashed);
+
+        await _context.SaveChangesAsync();
+
+        HttpContext.Session.Remove("Pending2FASecret");
+        HttpContext.Session.Remove("Pending2FARecoveryCodes");
+
+        _logger.LogInformation("User {UserId} enabled 2FA", userId);
+
+        TempData["SuccessMessage"] = "Two-factor authentication enabled.";
+        return RedirectToAction(nameof(Security));
+    }
+
+    // POST: /Account/DisableTwoFactor
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DisableTwoFactor()
+    {
+        if (CurrentUserId is not { } userId) return Challenge();
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+        if (user == null) return NotFound();
+
+        user.TwoFactorEnabled = false;
+        user.TwoFactorSecret = null;
+        user.TwoFactorRecoveryCodes = null;
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("User {UserId} disabled 2FA", userId);
+
+        TempData["SuccessMessage"] = "Two-factor authentication disabled.";
+        return RedirectToAction(nameof(Security));
+    }
 
     // GET: /Account
     [HttpGet]

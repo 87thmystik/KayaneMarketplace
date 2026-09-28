@@ -134,6 +134,7 @@ builder.Services.AddHttpClient<PsbService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
 builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<ITotpService, TotpService>();
 
 var app = builder.Build();
 

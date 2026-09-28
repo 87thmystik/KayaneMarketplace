@@ -29,12 +29,14 @@ public class RefundsController : Controller
 
     // GET: /{adminPrefix}/Refunds
     [HttpGet]
-    public async Task<IActionResult> Index(string filter = "pending")
+    public async Task<IActionResult> Index(string filter = "pending", int page = 1)
     {
         if (filter != "pending" && filter != "processed" && filter != "all")
             filter = "pending";
 
-        // Base: all payments that were flagged as refunded.
+        const int pageSize = 25;
+        page = Math.Max(1, page);
+
         var baseQuery = _context.Payments
             .AsNoTracking()
             .Where(p => p.Status == PaymentStatus.Refunded);
@@ -48,13 +50,16 @@ public class RefundsController : Controller
         else if (filter == "processed")
             query = query.Where(p => p.RefundedAt != null);
 
+        var totalItems = await query.CountAsync();
+
         var raw = await query
             .Include(p => p.Order)
                 .ThenInclude(o => o!.OrderItems)
                     .ThenInclude(oi => oi.Product)
                         .ThenInclude(prod => prod!.Vendor)
             .OrderByDescending(p => p.UpdatedAt ?? p.CreatedAt)
-            .Take(200)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
         // Resolve admin names for processed refunds in one query.
@@ -74,7 +79,6 @@ public class RefundsController : Controller
         {
             var order = p.Order;
 
-            // Group items by vendor for the display column.
             var vendors = order?.OrderItems
                 .Where(oi => oi.Product?.Vendor != null)
                 .GroupBy(oi => new { oi.Product!.VendorId, oi.Product.Vendor!.BusinessName })
@@ -102,7 +106,7 @@ public class RefundsController : Controller
                 BuyerEmail = order?.CustomerEmail ?? string.Empty,
                 PaymentCreatedAt = p.CreatedAt,
                 CancelledAt = order?.UpdatedAt,
-                CancellationReason = "Buyer/vendor cancellation",   // detail in order
+                CancellationReason = "Buyer/vendor cancellation",
                 Vendors = vendors,
                 IsProcessed = p.RefundedAt.HasValue,
                 RefundedAt = p.RefundedAt,
@@ -116,7 +120,10 @@ public class RefundsController : Controller
             CurrentFilter = filter,
             PendingCount = pendingCount,
             ProcessedCount = processedCount,
-            PendingTotal = await baseQuery.Where(p => p.RefundedAt == null).SumAsync(p => p.Amount)
+            PendingTotal = await baseQuery.Where(p => p.RefundedAt == null).SumAsync(p => p.Amount),
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalItems = totalItems
         };
 
         return View(vm);
@@ -161,7 +168,6 @@ public class RefundsController : Controller
             note = note
         });
 
-        // Notify buyer — refund has been sent
         if (payment.Order != null)
         {
             var reference = payment.Order.OrderId.ToString()[..8].ToUpperInvariant();

@@ -1,6 +1,7 @@
 ﻿using Kayane.Data;
 using Kayane.Models;
 using Kayane.Services;
+using Kayane.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -30,15 +31,35 @@ public class AdminPayoutsController : Controller
 
     // GET: /Admin/AdminPayouts
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1)
     {
-        var payouts = await _context.PayoutTransactions
+        const int pageSize = 25;
+        page = Math.Max(1, page);
+
+        var query = _context.PayoutTransactions
             .Include(p => p.Vendor)
-            .AsNoTracking()
+            .AsNoTracking();
+
+        var totalItems = await query.CountAsync();
+
+        var payouts = await query
             .OrderByDescending(p => p.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
-        return View(payouts);
+        var vm = new AdminPayoutListVM
+        {
+            Payouts = payouts,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalItems = totalItems,
+            PendingCount = await _context.PayoutTransactions.CountAsync(p => p.Status == "Pending"),
+            ApprovedCount = await _context.PayoutTransactions.CountAsync(p => p.Status == "Approved"),
+            RejectedCount = await _context.PayoutTransactions.CountAsync(p => p.Status == "Rejected")
+        };
+
+        return View(vm);
     }
 
     // POST: /Admin/AdminPayouts/ProcessPayout
