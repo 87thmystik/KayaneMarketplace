@@ -3,6 +3,7 @@ using Kayane.Models;
 using Kayane.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.RateLimiting;
 
@@ -14,8 +15,8 @@ System.Globalization.CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // URL prefixes for private areas (from config)
-var adminPrefix = builder.Configuration["Routing:AdminPrefix"] ?? "admin";
-var vendorPrefix = builder.Configuration["Routing:VendorPrefix"] ?? "vendor";
+var adminPrefix = (builder.Configuration["Routing:AdminPrefix"] ?? "admin").Trim('/');
+var vendorPrefix = (builder.Configuration["Routing:VendorPrefix"] ?? "vendor").Trim('/');
 
 // 1. Database Connection
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -28,6 +29,13 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/Auth/Login";
         options.AccessDeniedPath = "/Auth/AccessDenied";
+
+        // Security hardening
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
 
         // Redirect unauthenticated requests for admin URLs to the admin login,
         // and everything else to the public login.
@@ -63,12 +71,22 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("Vendor").RequireClaim("VendorStatus", "Active"));
 });
 
+// Response compression (gzip / brotli)
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+        new[] { "application/json", "text/html", "text/css", "text/javascript", "application/javascript" });
+});
+
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromHours(2);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
 builder.Services.AddRateLimiter(options =>
@@ -124,6 +142,10 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+// Health checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<KayaneDb>("database");
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -138,12 +160,49 @@ builder.Services.AddScoped<ITotpService, TotpService>();
 
 var app = builder.Build();
 
+// ===================== MIDDLEWARE PIPELINE =====================
+
+// 1. Exception handling — dev shows stack traces, prod shows friendly page
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+// 2. HTTPS redirect
+app.UseHttpsRedirection();
+
+// 3. Security headers on every response
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+
+    await next();
+});
+
+// 4. Response compression
+app.UseResponseCompression();
+
+// 5. Static files
 app.UseStaticFiles();
+
+// 6. Routing + auth
 app.UseRouting();
 app.UseRateLimiter();
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Health check endpoint — no auth, no redirect
+app.MapHealthChecks("/health").AllowAnonymous();
 
 // Admin area — lives under /{adminPrefix}/...
 app.MapControllerRoute(
@@ -198,7 +257,7 @@ using (var scope = app.Services.CreateScope())
                     Email = seedEmail,
                     Phone = seedPhone,
                     Role = Kayane.Models.UserRole.Admin,
-                    IsSuperAdmin = true,     
+                    IsSuperAdmin = true,
                     CreatedAt = DateTime.UtcNow
                 };
                 adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, seedPassword);
